@@ -155,8 +155,12 @@ fabric.properties
 .idea/caches/build_file_checksums.ser
 
 venv/
-obuboic/secrets.py
+obuboic/my_secrets.py
 obuboic/manage.py
 obuboic/db.sqlite3
 
 .idea/
+__pycache__
+*.pyc
+
+migrations
