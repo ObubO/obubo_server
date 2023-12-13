@@ -6,7 +6,7 @@ from rest_framework.generics import CreateAPIView
 
 from .models import User
 from .serializers import UserSerializer
-from .backends import EmailBackend
+
 
 # Create your views here.
 def home(request):
@@ -14,7 +14,6 @@ def home(request):
 
 
 def login(request):
-    #EmailBackend.authenticate(request.username, request.password)
     if request.method == "POST":
         email = request.email
         password = request.password

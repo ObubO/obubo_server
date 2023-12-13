@@ -53,25 +53,25 @@ class UserChangeForm(forms.ModelForm):
 class UserAdmin(BaseUserAdmin):
 
     fieldsets = (
-        (None, {'fields': ('email', 'password')}),
-        ('Personal info', {'fields': ('username',)}),
+        (None, {'fields': ('login_id', 'password')}),
+        ('Personal info', {'fields': ('username', 'gender', 'phone', 'birth')}),
         ('Permissions', {'fields': ('is_admin',)}),
     )
 
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('email', 'username', 'password1', 'password2')}
+            'fields': ('login_id', 'username', 'password1', 'password2')}
          ),
     )
 
     form = UserChangeForm
     add_from = UserCreationForm
 
-    list_display = ('email', 'username')
+    list_display = ('login_id', 'username', 'last_login',)
     list_filter = ('is_admin',)
-    search_fields = ('email', 'username')
-    ordering = ('email',)
+    search_fields = ('login_id', 'username')
+    ordering = ('login_id',)
 
     filter_horizontal = ()
 

@@ -8,7 +8,7 @@ class EmailBackend(ModelBackend):
         if username is None:
             username = kwargs.get(user_model.USERNAME_FIELD)
         try:
-            user = user_model.objects.get(email=username)
+            user = user_model.objects.get(username=username)
             if user.check_password(password):
                 return user
         except user_model.DoesNoExist:
