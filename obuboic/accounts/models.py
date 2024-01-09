@@ -14,44 +14,46 @@ class UserManger(BaseUserManager):
 
     use_in_migration = True
 
-    def _create_user(self, login_id, username, password, **extra_fields):
+    def _create_user(self, username, nickname, password, **extra_fields):
 
-        if not login_id:
+        if not username:
             raise ValueError("아이디를 입력해주세요")
         if not password:
             raise ValueError('비밀번호를 입력해주세요.')
 
-        login_id = self.model.normalize_username(login_id)
         username = self.model.normalize_username(username)
+        nickname = self.model.normalize_username(nickname)
 
-        user = self.model(login_id=login_id, username=username, **extra_fields)
+        user = self.model(username=username, nickname=nickname, **extra_fields)
         user.set_password(password)
 
         user.save(using=self.db)
 
-    def create_user(self, login_id, username, password, **extra_fields):
+    def create_user(self, username, nickname, password, **extra_fields):
 
         extra_fields.setdefault('is_admin', False)
         extra_fields.setdefault('is_superuser', False)
 
-        return self._create_user(login_id, username, password, **extra_fields)
+        return self._create_user(username, nickname, password, **extra_fields)
 
-    def create_superuser(self, login_id, username, password, **extra_fields):
+    def create_superuser(self, username, nickname, password, **extra_fields):
 
         extra_fields.setdefault('is_admin', True)
         extra_fields.setdefault('is_superuser', True)
 
-        return self._create_user(login_id, username, password, **extra_fields)
+        return self._create_user(username, nickname, password, **extra_fields)
 
 
 class User(AbstractBaseUser, PermissionsMixin):
 
-    login_id = models.CharField(_("login_id"), max_length=50, unique=True)
-
     username_validator = UnicodeUsernameValidator()
-    username = models.CharField(_("username"), max_length=20, validators=[username_validator], blank=True)
+    username = models.CharField(_("username"), max_length=20, validators=[username_validator], unique=True)
+
+    email = models.EmailField(_("email"), max_length=50)
 
     password = models.CharField(_("password"), max_length=255)
+
+    nickname = models.CharField(_("nickname"), max_length=20)
 
     gender = models.CharField(_("gender"), max_length=1, choices=GENDER)
 
@@ -64,19 +66,20 @@ class User(AbstractBaseUser, PermissionsMixin):
     updated_at = models.DateField(auto_now=True)
 
     is_active = models.BooleanField(_("active"), default=True)
+
     is_admin = models.BooleanField(default=False)
 
     objects = UserManger()
 
-    USERNAME_FIELD = "login_id"
-    REQUIRED_FIELDS = ["username"]
+    USERNAME_FIELD = "username"
+    REQUIRED_FIELDS = ["nickname"]
 
     class Meta:
         verbose_name = _("user")
         verbose_name_plural = _("users")
 
     def __str__(self):
-        return self.login_id
+        return self.username
 
     @property
     def is_staff(self):
