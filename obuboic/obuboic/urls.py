@@ -5,5 +5,6 @@ from rest_framework import urls
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('accounts.urls')),
+    path('healths/', include('healths.urls')),
 
 ]
