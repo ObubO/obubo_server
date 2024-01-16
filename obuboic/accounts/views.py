@@ -125,6 +125,26 @@ class LoginView(APIView):
                 return response
 
 
+# 계정 로그아웃 API
+class LogoutView(APIView):
+    def post(self, request):
+        access = request.headers.get('Authorization', None)
+
+        # JWT 인증(Access Token)
+        payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'])
+
+        # 사용자 조회
+        pk = payload.get('user_id')
+        user = get_object_or_404(User, pk=pk)
+        serializer = UserSerializer(instance=user)
+
+        # 해당 회원의 Refresh Token 삭제
+        user.refresh_token = None
+        user.save()
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 # AccessToken 재발급 API
 class CustomTokenRefreshView(TokenRefreshView):
     def post(self, request):
