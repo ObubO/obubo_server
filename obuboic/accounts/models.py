@@ -10,6 +10,13 @@ GENDER = {
     }
 
 
+USERTYPE = {
+    ('Admin', '관리자'),
+    ('General', '일반'),
+    ('Nurse', '요양보호사'),
+}
+
+
 class UserManger(BaseUserManager):
 
     use_in_migration = True
@@ -26,6 +33,8 @@ class UserManger(BaseUserManager):
 
         user = self.model(username=username, nickname=nickname, **extra_fields)
         user.set_password(password)
+
+        extra_fields.setdefault('is_member', True)
 
         user.save(using=self.db)
 
@@ -48,25 +57,21 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     username_validator = UnicodeUsernameValidator()
     username = models.CharField(_("username"), max_length=20, validators=[username_validator], unique=True)
-
-    email = models.EmailField(_("email"), max_length=50)
-
     password = models.CharField(_("password"), max_length=255)
 
     nickname = models.CharField(_("nickname"), max_length=20)
-
+    email = models.EmailField(_("email"), max_length=50)
     gender = models.CharField(_("gender"), max_length=1, choices=GENDER)
-
     phone = models.CharField(_("phone"), max_length=11, null=True, blank=True)
-
     birth = models.DateField(_("birth"), null=True, blank=True)
+    user_type = models.CharField(_("user_type"), max_length=10, choices=USERTYPE)
 
     created_at = models.DateTimeField(auto_now_add=True)
-
     updated_at = models.DateField(auto_now=True)
+    is_member = models.BooleanField(_("member"), default=True)
+    refresh_token = models.CharField(_("refresh_token"), max_length=255, null=True, blank=True)
 
     is_active = models.BooleanField(_("active"), default=True)
-
     is_admin = models.BooleanField(default=False)
 
     objects = UserManger()
@@ -84,3 +89,4 @@ class User(AbstractBaseUser, PermissionsMixin):
     @property
     def is_staff(self):
         return self.is_admin
+
