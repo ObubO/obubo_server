@@ -15,8 +15,8 @@ class CareGradeAPI(APIView):
             serializer.save()
             res = Response(
                 {
-                    "message": "Register Success",
-                    "data": serializer.data,
+                    "code": 200,
+                    "message": "평가결과 등록 완료",
                 },
                 status=status.HTTP_200_OK,
             )

@@ -15,9 +15,9 @@ class CareGrade(models.Model):
         on_delete=models.CASCADE,
         null=True,
     )
-    data = models.JSONField(_("data"), default='{}')
-    birth = models.DateField(_("birth"), null=True, blank=True)
+    data = models.JSONField(_("result"), default=dict)
     gender = models.CharField(_("gender"), max_length=1, choices=GENDER)
+    age = models.IntegerField(_("age"))
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
