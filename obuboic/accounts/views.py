@@ -2,6 +2,8 @@ import jwt
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth import authenticate
 from django.conf import settings
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -18,6 +20,7 @@ def home(request):
 
 
 # 회원가입
+@method_decorator(csrf_exempt, name='dispatch')
 class UserCreateView(APIView):
     def post(self, request):
         serializer = UserSerializer(data=request.data)
@@ -27,9 +30,7 @@ class UserCreateView(APIView):
                 username=serializer.validated_data["username"],
                 nickname=serializer.validated_data["nickname"],
                 password=serializer.validated_data["password"],
-                email=serializer.validated_data["email"],
                 gender=serializer.validated_data["gender"],
-                phone=serializer.validated_data["phone"],
                 birth=serializer.validated_data["birth"],
                 user_type=serializer.validated_data["user_type"],
             )
@@ -66,6 +67,7 @@ class AuthView(APIView):
 
 
 # 계정 로그인 API
+@method_decorator(csrf_exempt, name='dispatch')
 class LoginView(APIView):
     def post(self, request):
         try:
@@ -95,6 +97,7 @@ class LoginView(APIView):
 
 
 # 계정 로그아웃 API
+@method_decorator(csrf_exempt, name='dispatch')
 class LogoutView(APIView):
     def post(self, request):
         access = request.headers.get('Authorization', None)
@@ -115,6 +118,7 @@ class LogoutView(APIView):
 
 
 # AccessToken 재발급 API
+@method_decorator(csrf_exempt, name='dispatch')
 class CustomTokenRefreshView(TokenRefreshView):
     def post(self, request):
         try:

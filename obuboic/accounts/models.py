@@ -5,15 +5,14 @@ from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.utils.translation import gettext_lazy as _
 
 GENDER = {
-        ("M", "Man"),
-        ("W", "Woman"),
+        ("M", "MAN"),
+        ("W", "WOMAN"),
     }
 
 
 USERTYPE = {
-    ('Admin', '관리자'),
-    ('General', '일반'),
-    ('Nurse', '요양보호사'),
+    ('Self', '본인'),
+    ('Guard', '보호자'),
 }
 
 
@@ -49,6 +48,7 @@ class UserManger(BaseUserManager):
 
         extra_fields.setdefault('is_admin', True)
         extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('birth', '2023-05-14')
 
         return self._create_user(username, nickname, password, **extra_fields)
 
@@ -60,10 +60,10 @@ class User(AbstractBaseUser, PermissionsMixin):
     password = models.CharField(_("password"), max_length=255)
 
     nickname = models.CharField(_("nickname"), max_length=20)
-    email = models.EmailField(_("email"), max_length=50)
+    email = models.EmailField(_("email"), max_length=50, null=True, blank=True)
     gender = models.CharField(_("gender"), max_length=1, choices=GENDER)
     phone = models.CharField(_("phone"), max_length=11, null=True, blank=True)
-    birth = models.DateField(_("birth"), null=True, blank=True)
+    birth = models.DateField(_("birth"))
     user_type = models.CharField(_("user_type"), max_length=10, choices=USERTYPE)
 
     created_at = models.DateTimeField(auto_now_add=True)
