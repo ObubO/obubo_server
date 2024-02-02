@@ -10,7 +10,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 from rest_framework_simplejwt.views import TokenRefreshView
 from .models import User
-from .serializers import UserSerializer, CustomUserSerializer
+from .serializers import UserSerializer, CustomUserSerializer, CheckUserIdSerializer
 
 SECRET_KEY = getattr(settings, 'SECRET_KEY', 'SECRET_KEY')
 
@@ -22,6 +22,14 @@ def home(request):
 # 회원가입
 @method_decorator(csrf_exempt, name='dispatch')
 class UserCreateView(APIView):
+    def get(self, request):
+        serializer = CheckUserIdSerializer(data=request.data)
+
+        if serializer.is_valid():
+            return Response({"code": 200, "message": "사용가능한 ID입니다"}, status=status.HTTP_200_OK)
+        else:
+            return Response({"code": 400, "message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
     def post(self, request):
         serializer = UserSerializer(data=request.data)
 
