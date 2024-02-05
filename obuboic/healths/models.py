@@ -12,10 +12,11 @@ GENDER = {
 class CareGrade(models.Model):
     user = models.ForeignKey(
         User,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
+        blank=True,
         null=True,
     )
-    data = models.JSONField(_("result"), default=dict)
+    data = models.JSONField(_("data"), default=dict)
     gender = models.CharField(_("gender"), max_length=1, choices=GENDER)
     age = models.IntegerField(_("age"))
     created_at = models.DateTimeField(auto_now_add=True)
