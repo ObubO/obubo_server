@@ -33,4 +33,9 @@ class CareGradeAPI(APIView):
             )
             return res
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+

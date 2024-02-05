@@ -16,7 +16,7 @@ class CareGrade(models.Model):
         blank=True,
         null=True,
     )
-    data = models.JSONField(_("data"), default=dict)
+    data = models.JSONField(_("data"))
     gender = models.CharField(_("gender"), max_length=1, choices=GENDER)
     age = models.IntegerField(_("age"))
     created_at = models.DateTimeField(auto_now_add=True)

@@ -103,8 +103,6 @@ class AnalysisDiagram:
         self.rehab_low = rehab["qa3"]
         self.rehab_up = rehab["qa4"]
 
-        print(self.physic_score, self.behav_score, self.recog_score, self.rehab_score, self.nurse_score)
-
     # == 청결 수형분석도 ==#
     def clean_diagram(self):
         result, score = 0, 9.4

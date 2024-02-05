@@ -4,7 +4,9 @@ from .models import CareGrade
 
 
 class CareGradeAdmin(admin.ModelAdmin):
-    fields = ['user', 'birth', 'gender', 'data', ]
+    fields = ['user', 'age', 'gender', 'data', ]
+
+    list_display = ('user', 'age', 'gender')
 
 
 admin.site.register(CareGrade, CareGradeAdmin)
