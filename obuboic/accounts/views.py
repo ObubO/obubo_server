@@ -9,8 +9,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 from rest_framework_simplejwt.views import TokenRefreshView
-from .models import User
-from .serializers import UserSerializer, CustomUserSerializer, CheckUserIdSerializer
+from .models import User, PrivacyPolicy
+from .serializers import UserSerializer, CustomUserSerializer, CheckUserIdSerializer, PrivacyPolicySerializer
 
 SECRET_KEY = getattr(settings, 'SECRET_KEY', 'SECRET_KEY')
 
@@ -26,27 +26,43 @@ class UserCreateView(APIView):
         serializer = CheckUserIdSerializer(data=request.data)
 
         if serializer.is_valid():
-            return Response({"code": 200, "message": "사용가능한 ID입니다"}, status=status.HTTP_200_OK)
+            return Response({"code": 200, "message": "사용가능한 ID 입니다"}, status=status.HTTP_200_OK)
         else:
             return Response({"code": 400, "message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
     def post(self, request):
-        serializer = UserSerializer(data=request.data)
+        user_serializer = UserSerializer(data=request.data)
+        consent_serializer = PrivacyPolicySerializer(data=request.data)
 
-        if serializer.is_valid():
+        # 회원 정보 저장
+        if user_serializer.is_valid():
             User.objects.create_user(
-                username=serializer.validated_data["username"],
-                nickname=serializer.validated_data["nickname"],
-                password=serializer.validated_data["password"],
-                gender=serializer.validated_data["gender"],
-                birth=serializer.validated_data["birth"],
-                user_type=serializer.validated_data["user_type"],
+                username=user_serializer.validated_data["username"],
+                nickname=user_serializer.validated_data["nickname"],
+                password=user_serializer.validated_data["password"],
+                gender=user_serializer.validated_data["gender"],
+                birth=user_serializer.validated_data["birth"],
+                user_type=user_serializer.validated_data["user_type"],
+                email=user_serializer.validated_data["email"],
+                phone=user_serializer.validated_data["phone"]
             )
+
+            # 개인정보 제공동의 여부 저장
+            if consent_serializer.is_valid():
+                user = get_object_or_404(User, username=user_serializer.validated_data["username"])
+
+                PrivacyPolicy.objects.create(
+                    user=user,
+                    TERM_OF_USE=consent_serializer.validated_data["TERM_OF_USE"],
+                    PERSONAL_INFORMATION_COLLECT_AGREE=consent_serializer.validated_data["PERSONAL_INFORMATION_COLLECT_AGREE"],
+                    PERSONAL_INFORMATION_UTIL_AGREE=consent_serializer.validated_data["PERSONAL_INFORMATION_UTIL_AGREE"],
+                    MARKETING_INFORMATION_RECEIVE_AGREE=consent_serializer.validated_data["MARKETING_INFORMATION_RECEIVE_AGREE"],
+                )
 
             return Response({"code": 201, "message": "회원가입 완료"}, status=status.HTTP_201_CREATED)
 
         else:
-            return Response({"code": 400, "message": "회원가입 실패", "error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"code": 400, "message": "회원가입 실패", "error": user_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 # 계정 조회/수정 API
@@ -81,9 +97,7 @@ class LoginView(APIView):
         try:
             # ID/PW 인증
             user = authenticate(username=request.data.get("username"), password=request.data.get("password"))
-
-        except:
-
+        except():
             return Response({"code": 400, "message": "로그인 정보가 올바르지 않습니다"}, status=status.HTTP_400_BAD_REQUEST)
 
         else:
@@ -116,7 +130,6 @@ class LogoutView(APIView):
         # 사용자 조회
         pk = payload.get('user_id')
         user = get_object_or_404(User, pk=pk)
-        serializer = UserSerializer(instance=user)
 
         # 해당 회원의 Refresh Token 삭제
         user.refresh_token = None
@@ -140,7 +153,7 @@ class CustomTokenRefreshView(TokenRefreshView):
             user = get_object_or_404(User, pk=pk)
             serializer = UserSerializer(instance=user)
 
-        #-- 탈취당한 Refresh Token 여부 --#
+        # -- 탈취당한 Refresh Token 여부 -- #
             # 정상적 요청인 경우
             if refresh_token == serializer.data.get('refresh_token'):
                 data = {'refresh': refresh_token}
@@ -164,4 +177,3 @@ class CustomTokenRefreshView(TokenRefreshView):
         # 사용 불가능 토큰
         except(jwt.exceptions.InvalidTokenError):
             return Response({"code": 400, "message": "사용할 수 없는 토큰입니다"}, status=status.HTTP_400_BAD_REQUEST)
-

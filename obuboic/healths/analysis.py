@@ -33,12 +33,7 @@ class AnalysisDiagram:
     nurse_press, nurse_dialy = 0, 0
 
     def save(self, data):
-        global CONVERT_PHYSIC
-        global CONVERT_REHAB
-        global CONVERT_BEHAV
-        global CONVERT_RECOG
-        global CONVERT_NURSE
-
+        global CONVERT_PHYSIC, CONVERT_REHAB, CONVERT_BEHAV, CONVERT_RECOG, CONVERT_NURSE
         physical, recognize, behavior, nursing, rehab = data['physical'], data['recognize'], data['behavior'], data['nursing'], data['rehabilitation']
 
         # -- 신체기능 설문 점수 저장 --#
@@ -48,7 +43,6 @@ class AnalysisDiagram:
             temp += weight * value
 
         self.physic_score = CONVERT_PHYSIC[round(temp)]
-
         self.physic_eat = physical["qa1"]
         self.physic_bath = physical["qa2"]
         self.physic_change = physical["qa3"]
@@ -61,7 +55,6 @@ class AnalysisDiagram:
             temp += weight * value
 
         self.recog_score = CONVERT_RECOG[round(temp)]
-
         self.recog_demen = recognize["qa1"]
         self.recog_env = recognize["qa2"]
         self.recog_judge = recognize["qa3"]
@@ -73,7 +66,6 @@ class AnalysisDiagram:
             temp += weight * value
 
         self.behav_score = CONVERT_BEHAV[round(temp)]
-
         self.behav_unstable = behavior["qa1"]
         self.behav_chaos = behavior["qa2"]
         self.behav_sad = behavior["qa3"]
@@ -86,7 +78,6 @@ class AnalysisDiagram:
             temp += weight * value
 
         self.nurse_score = CONVERT_NURSE[round(temp)]
-
         self.nurse_press = nursing["qa1"]
         self.nurse_dialy = nursing["qa2"]
 
@@ -97,7 +88,6 @@ class AnalysisDiagram:
             temp += weight * value
 
         self.rehab_score = CONVERT_REHAB[round(temp)]
-
         self.rehab_right = rehab["qa1"]
         self.rehab_left = rehab["qa2"]
         self.rehab_low = rehab["qa3"]

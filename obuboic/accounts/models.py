@@ -9,7 +9,6 @@ GENDER = {
         ("W", "WOMAN"),
     }
 
-
 USERTYPE = {
     ('Self', '본인'),
     ('Guard', '보호자'),
@@ -32,8 +31,6 @@ class UserManger(BaseUserManager):
 
         user = self.model(username=username, nickname=nickname, **extra_fields)
         user.set_password(password)
-
-        extra_fields.setdefault('is_member', True)
 
         user.save(using=self.db)
 
@@ -68,7 +65,6 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateField(auto_now=True)
-    is_member = models.BooleanField(_("member"), default=True)
     refresh_token = models.CharField(_("refresh_token"), max_length=255, null=True, blank=True)
 
     is_active = models.BooleanField(_("active"), default=True)
@@ -90,3 +86,21 @@ class User(AbstractBaseUser, PermissionsMixin):
     def is_staff(self):
         return self.is_admin
 
+
+class PrivacyPolicy(models.Model):
+    user = models.ForeignKey(
+        User,
+        related_name='user',
+        on_delete=models.CASCADE,
+        null=True,
+    )
+    TERM_OF_USE = models.BooleanField(_("term_of_use"), default=False)
+    PERSONAL_INFORMATION_COLLECT_AGREE = models.BooleanField(_("personal_info_collect_agree"), default=False)
+    PERSONAL_INFORMATION_UTIL_AGREE = models.BooleanField(_("personal_info_util_agree"), default=False)
+    MARKETING_INFORMATION_RECEIVE_AGREE = models.BooleanField(_("marketing_info_receive_agree"), default=False)
+
+    objects = models.Manager()
+
+    class Meta:
+        verbose_name = "개인정보 이용약관"
+        verbose_name_plural = "개인정보 이용약관"
