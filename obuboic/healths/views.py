@@ -1,3 +1,5 @@
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -6,8 +8,9 @@ from .analysis import AnalysisDiagram
 
 
 # Create your views here.
+@method_decorator(csrf_exempt, name='dispatch')
 class CareGradeAPI(APIView):
-    def get(self, request):
+    def post(self, request):
         serializer = CareGradeSerializer(data=request.data)
 
         if serializer.is_valid():

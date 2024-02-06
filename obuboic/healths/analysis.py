@@ -40,58 +40,58 @@ class AnalysisDiagram:
         temp = 0
         weight = 12 / 4
         for value in physical.values():
-            temp += weight * value
+            temp += weight * int(value)
 
         self.physic_score = CONVERT_PHYSIC[round(temp)]
-        self.physic_eat = physical["qa1"]
-        self.physic_bath = physical["qa2"]
-        self.physic_change = physical["qa3"]
-        self.physic_wash = physical["qa4"]
+        self.physic_eat = int(physical["qa1"])
+        self.physic_bath = int(physical["qa2"])
+        self.physic_change = int(physical["qa3"])
+        self.physic_wash = int(physical["qa4"])
 
         # -- 인지기능 설문 점수 저장 --#
         temp = 0
         weight = 7 / 3
         for value in recognize.values():
-            temp += weight * value
+            temp += weight * int(value)
 
         self.recog_score = CONVERT_RECOG[round(temp)]
-        self.recog_demen = recognize["qa1"]
-        self.recog_env = recognize["qa2"]
-        self.recog_judge = recognize["qa3"]
+        self.recog_demen = int(recognize["qa1"])
+        self.recog_env = int(recognize["qa2"])
+        self.recog_judge = int(recognize["qa3"])
 
         # -- 행동변화 설문 점수 저장 --#
         temp = 0
         weight = 14 / 4
         for value in behavior.values():
-            temp += weight * value
+            temp += weight * int(value)
 
         self.behav_score = CONVERT_BEHAV[round(temp)]
-        self.behav_unstable = behavior["qa1"]
-        self.behav_chaos = behavior["qa2"]
-        self.behav_sad = behavior["qa3"]
-        self.behav_bad = behavior["qa4"]
+        self.behav_unstable = int(behavior["qa1"])
+        self.behav_chaos = int(behavior["qa2"])
+        self.behav_sad = int(behavior["qa3"])
+        self.behav_bad = int(behavior["qa4"])
 
         # -- 간호처치 설문 점수 저장 --#
         temp = 0
         weight = 9 / 2
         for value in nursing.values():
-            temp += weight * value
+            temp += weight * int(value)
 
         self.nurse_score = CONVERT_NURSE[round(temp)]
-        self.nurse_press = nursing["qa1"]
-        self.nurse_dialy = nursing["qa2"]
+        self.nurse_press = int(nursing["qa1"])
+        self.nurse_dialy = int(nursing["qa2"])
 
         # -- 재활영역 설문 점수 저장 --#
         temp = 0
         weight = 10 / 4
         for value in rehab.values():
-            temp += weight * value
+            temp += weight * int(value)
 
         self.rehab_score = CONVERT_REHAB[round(temp)]
-        self.rehab_right = rehab["qa1"]
-        self.rehab_left = rehab["qa2"]
-        self.rehab_low = rehab["qa3"]
-        self.rehab_up = rehab["qa4"]
+        self.rehab_right = int(rehab["qa1"])
+        self.rehab_left = int(rehab["qa2"])
+        self.rehab_low = int(rehab["qa3"])
+        self.rehab_up = int(rehab["qa4"])
 
     # == 청결 수형분석도 ==#
     def clean_diagram(self):
@@ -314,51 +314,22 @@ class AnalysisDiagram:
         rate = 0
 
         if score >= 95:
-            rate = "어르신의 예상 장기요양등급은 1~2 등급입니다."
-            detail = {
-                "option1": "요양원 등 이용 시 전체 비용의 20%인 487,170원 (1개월 기준)으로 이용하실 수 있습니다.",
-                "option2": "방문간호, 방문요양 등 이용 시 전체 비용의 15%인 3,618원 (1시간 기준)으로 이용하실 수 있습니다.",
-                "option3": "해당 등급은 데이케어센터 이용이 불가합니다."
-            }
+            rate = 1
+
         elif score >= 75:
-            rate = "어르신의 예상 장기요양등급은 2~3 등급입니다."
-            detail = {
-                "option1": "요양원 등 이용 시 전체 비용의 20%인 455,850원 (1개월 기준)으로 이용하실 수 있습니다.",
-                "option2": "방문간호, 방문요양 등 이용 시 전체 비용의 15%인 3,618원 (1시간 기준)으로 이용하실 수 있습니다.",
-                "option3": "전체 비용의 15%인 170,280원 (20일 기준)으로 이용하실 수 있습니다"
-            }
+            rate = 2
+
         elif score >= 60:
-            rate = "어르신의 예상 장기요양등급은 3~4 등급입니다."
-            detail = {
-                "option1": "요양원 등 이용 시 전체 비용의 20%인 442,800원 (1개월 기준)으로 이용하실 수 있습니다.",
-                "option2": "방문간호, 방문요양 등 이용 시 전체 비용의 15%인 3,618원 (1시간 기준)으로 이용하실 수 있습니다.",
-                "option3": "전체 비용의 15%인 165,640원 (20일 기준)으로 이용하실 수 있습니다"
-            }
+            rate = 3
+
         elif score >= 51:
-            rate = "어르신의 예상 장기요양등급은 4~5 등급입니다."
-            detail = {
-                "option1": "요양원 등 이용 시 전체 비용의 20%인 442,800원 (1개월 기준)으로 이용하실 수 있습니다.",
-                "option2": "방문간호, 방문요양 등 이용 시 전체 비용의 15%인 3,618원 (1시간 기준)으로 이용하실 수 있습니다.",
-                "option3": "전체 비용의 15%인 160,920원 (20일 기준)으로 이용하실 수 있습니다"
-            }
-        elif score >= 45 and self.recog_demen == 1:
-            rate = "어르신의 예상 장기요양등급은 5~인지지원 등급입니다."
-            detail = {
-                "option1": "장기요양 등급 평가기관에 문의 후 확인가능합니다.",
-                "option2": "장기요양 등급 평가기관에 문의 후 확인가능합니다.",
-                "option3": "장기요양 등급 평가기관에 문의 후 확인가능합니다."
-            }
+            rate = 4
+
         else:
-            rate = "간소화 평가로 판단할 수 없습니다."
-            detail = {
-                "option1": "회원가입 후 장기요양등급평가(상세) 기능을 이용해보세요!",
-                "option2": "회원가입하기",
-                "option3": "홈으로 돌아가기"
-            }
+            rate = 5
 
         result = {
             "rate": rate,
-            "detail": detail,
         }
 
         return result
