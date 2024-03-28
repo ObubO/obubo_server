@@ -1,6 +1,6 @@
 from .base import *
 
-ALLOWED_HOSTS = ['3.38.12.213', 'nursinghome.ai', ]
+ALLOWED_HOSTS = ['3.38.12.213', 'nursinghome.ai', 'api.nursinghome.ai', ]
 STATIC_ROOT = BASE_DIR / 'static/'
 STATICFILES_DIRS = []
 
@@ -11,4 +11,6 @@ CORS_ALLOWED_ORIGINS = [
     'https://3.38.12.213',
     'http://nursinghome.ai',
     'https://nursinghome.ai',
+    'http://api.nursinghome.ai',
+    'https://api.nursinghome.ai',
 ]
