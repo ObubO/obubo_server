@@ -6,24 +6,22 @@ from django.contrib.auth.forms import ReadOnlyPasswordHashField
 
 from django.contrib.auth.forms import UserChangeForm, UserCreationForm
 
-from .models import User, Member
+from .models import User, Member, UserType
 
 
 # Register your models here.
 class UserAdmin(BaseUserAdmin):
     fieldsets = (
         (None,          {'fields': ('username', 'password')}),
-        ('Permissions', {'fields': ('is_admin', 'is_active', )}),
-        ('Date info',   {'fields': ('last_login', 'created_at', )}),
-        ('Auth info',   {'fields': ('refresh_token', )})
+        ('날짜정보',      {'fields': ('last_login', 'created_at', 'updated_at', )}),
+        ('활성여부',      {'fields': ('is_active',)}),
     )
 
-    readonly_fields = ['created_at', ]
+    readonly_fields = ['created_at', 'updated_at', 'last_login', ]
 
     add_fieldsets = (
         (None, {'classes': ('wide',),
-                'fields': ('username', 'password1', 'password2')}
-        ),
+                'fields': ('username', 'password1', 'password2')}),
     )
 
     form = UserChangeForm
@@ -37,13 +35,20 @@ class UserAdmin(BaseUserAdmin):
     filter_horizontal = ()
 
 
-admin.site.register(User, UserAdmin)
-admin.site.unregister(Group)
-
-
 class MemberAdmin(admin.ModelAdmin):
-    fields = ['user', 'name', 'gender', 'birth', 'email']
-    list_display = ('user', 'name', 'gender', 'birth', 'email')
+    fields = ['user', 'name', 'gender', 'phone', 'birth', 'email', 'user_type', ]
+    list_display = ('user', 'name', 'gender', )
+
+    search_fields = ('name',)
+    ordering = ('name',)
 
 
+class UserTypeAdmin(admin.ModelAdmin):
+    fields = ['type_name', ]
+    list_display = ('type_name', )
+
+
+admin.site.register(User, UserAdmin)
 admin.site.register(Member, MemberAdmin)
+admin.site.register(UserType, UserTypeAdmin)
+admin.site.unregister(Group)

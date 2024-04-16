@@ -68,7 +68,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(_("active"), default=True)
     is_admin = models.BooleanField(default=False)
 
-    readonly_fields = ('created_at',)
     objects = UserManger()
 
     USERNAME_FIELD = "username"
@@ -89,16 +88,14 @@ class UserType(models.Model):
     type_name = models.CharField(_("user_type"), max_length=10, choices=USERTYPE)
     objects = models.Manager()
 
-    class Meta:
-        verbose_name = "회원유형"
+    def __str__(self):
+        return self.type_name
 
 
 class Member(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        blank=False,
-        null=False,
     )
     name = models.CharField(_("name"), max_length=20)
     gender = models.CharField(_("gender"), max_length=1, choices=GENDER)
@@ -117,10 +114,13 @@ class Member(models.Model):
     class Meta:
         verbose_name = "회원정보"
 
+    def __str__(self):
+        return self.name
+
 
 class PrivacyPolicy(models.Model):
-    title = models.CharField(_("name"), max_length=20, null=True)
-    content = models.TextField(_("name"), null=True)
+    title = models.CharField(_("name"), max_length=20)
+    content = models.TextField(_("name"))
     is_necessary = models.BooleanField(_("is_necessary"), default=True)
 
     objects = models.Manager()
@@ -133,7 +133,6 @@ class PolicyAgree(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        null=True,
     )
     code = models.ForeignKey(
         PrivacyPolicy,
