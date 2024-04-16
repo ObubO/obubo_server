@@ -11,6 +11,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, Toke
 from rest_framework_simplejwt.views import TokenRefreshView
 from .models import User, UserType, Member, PrivacyPolicy, PolicyAgree
 from .serializers import UserSerializer, UserTypeSerializer, MemberSerializer, CustomUserSerializer, CheckUserIdSerializer, PrivacyPolicySerializer, PolicyAgreeSerializer
+from datetime import datetime
 
 SECRET_KEY = getattr(settings, 'SECRET_KEY', 'SECRET_KEY')
 
@@ -107,6 +108,7 @@ class LoginView(APIView):
 
                 # 해당 회원의 Refresh Token 저장
                 user.refresh_token = refresh_token
+                user.last_login = datetime.now()
                 user.save()
 
                 return Response({"code": 200, "message": "로그인 성공", "result": {"token": {"access": access_token, "refresh": refresh_token}}}, status=status.HTTP_200_OK)
@@ -120,19 +122,22 @@ class LoginView(APIView):
 class LogoutView(APIView):
     def post(self, request):
         access = request.headers.get('Authorization', None)
+        try:
+            # JWT 인증(Access Token)
+            payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'])
 
-        # JWT 인증(Access Token)
-        payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'])
+            # 사용자 조회
+            pk = payload.get('user_id')
+            user = get_object_or_404(User, pk=pk)
 
-        # 사용자 조회
-        pk = payload.get('user_id')
-        user = get_object_or_404(User, pk=pk)
+            # 해당 회원의 Refresh Token 삭제
+            user.refresh_token = None
+            user.save()
 
-        # 해당 회원의 Refresh Token 삭제
-        user.refresh_token = None
-        user.save()
+            return Response({"code": 200, "message": "로그아웃 성공"}, status=status.HTTP_200_OK)
 
-        return Response({"code": 200, "message": "로그아웃 성공"}, status=status.HTTP_200_OK)
+        except(jwt.exceptions.InvalidTokenError):
+            return Response({"code": 400, "message": "유효하지 않은 토큰입니다"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 # AccessToken 재발급 API
