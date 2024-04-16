@@ -9,8 +9,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 from rest_framework_simplejwt.views import TokenRefreshView
-from .models import User, PrivacyPolicy
-from .serializers import UserSerializer, CustomUserSerializer, CheckUserIdSerializer, PrivacyPolicySerializer
+from .models import User, UserType, Member, PrivacyPolicy, PolicyAgree
+from .serializers import UserSerializer, UserTypeSerializer, MemberSerializer, CustomUserSerializer, CheckUserIdSerializer, PrivacyPolicySerializer, PolicyAgreeSerializer
 
 SECRET_KEY = getattr(settings, 'SECRET_KEY', 'SECRET_KEY')
 
@@ -31,6 +31,7 @@ class UserCreateView(APIView):
             return Response({"code": 400, "message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
     def post(self, request):
+        member_serializer = MemberSerializer(data=request.data)
         user_serializer = UserSerializer(data=request.data)
         consent_serializer = PrivacyPolicySerializer(data=request.data)
 
@@ -38,28 +39,24 @@ class UserCreateView(APIView):
         if user_serializer.is_valid():
             User.objects.create_user(
                 username=user_serializer.validated_data["username"],
-                nickname=user_serializer.validated_data["nickname"],
                 password=user_serializer.validated_data["password"],
-                gender=user_serializer.validated_data["gender"],
-                birth=user_serializer.validated_data["birth"],
-                user_type=user_serializer.validated_data["user_type"],
-                email=user_serializer.validated_data["email"],
-                phone=user_serializer.validated_data["phone"]
             )
+            user = get_object_or_404(User, username=user_serializer.validated_data["username"])
 
-            # 개인정보 제공동의 여부 저장
-            if consent_serializer.is_valid():
-                user = get_object_or_404(User, username=user_serializer.validated_data["username"])
-
-                PrivacyPolicy.objects.create(
+            if member_serializer.is_valid():
+                Member.objects.create(
                     user=user,
-                    TERM_OF_USE=consent_serializer.validated_data["TERM_OF_USE"],
-                    PERSONAL_INFORMATION_COLLECT_AGREE=consent_serializer.validated_data["PERSONAL_INFORMATION_COLLECT_AGREE"],
-                    PERSONAL_INFORMATION_UTIL_AGREE=consent_serializer.validated_data["PERSONAL_INFORMATION_UTIL_AGREE"],
-                    MARKETING_INFORMATION_RECEIVE_AGREE=consent_serializer.validated_data["MARKETING_INFORMATION_RECEIVE_AGREE"],
+                    name=member_serializer.validated_data["name"],
+                    gender=member_serializer.validated_data["gender"],
+                    birth=member_serializer.validated_data["birth"],
+                    phone=member_serializer.validated_data["phone"],
+                    email=member_serializer.validated_data["email"],
                 )
 
-            return Response({"code": 201, "message": "회원가입 완료"}, status=status.HTTP_201_CREATED)
+                return Response({"code": 201, "message": "회원가입 완료"}, status=status.HTTP_201_CREATED)
+
+            else:
+                return Response({"code": 400, "message": "회원가입 실패", "error": member_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
         else:
             return Response({"code": 400, "message": "회원가입 실패", "error": user_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)

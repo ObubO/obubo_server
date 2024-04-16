@@ -1,16 +1,14 @@
 from rest_framework import serializers
-from .models import User, PrivacyPolicy
+from .models import UserType, User, Member, PrivacyPolicy, PolicyAgree
 
 
-class PrivacyPolicySerializer(serializers.ModelSerializer):
-
+class UserTypeSerializer(serializers.ModelSerializer):
     class Meta:
-        model = PrivacyPolicy
+        model = UserType
         fields = '__all__'
 
 
 class UserSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = User
         fields = '__all__'
@@ -26,4 +24,25 @@ class CheckUserIdSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['username', ]
+
+
+class MemberSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Member
+        fields = ['name', 'gender', 'birth', 'phone', 'email', ]
+
+
+class PrivacyPolicySerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = PrivacyPolicy
+        fields = '__all__'
+
+
+class PolicyAgreeSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = PolicyAgree
+        fields = '__all__'
+
 

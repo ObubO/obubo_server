@@ -14,12 +14,19 @@ USERTYPE = {
     ('Guard', '보호자'),
 }
 
+PRIVACY_POLICY = {
+    ('TERM_OF_USE', '이용약관1'),
+    ('PERSONAL_INFORMATION_COLLECT_AGREE', '이용약관2'),
+    ('PERSONAL_INFORMATION_UTIL_AGREE', '이용약관3'),
+    ('MARKETING_INFORMATION_RECEIVE_AGREE', '이용약관4'),
+}
+
 
 class UserManger(BaseUserManager):
 
     use_in_migration = True
 
-    def _create_user(self, username, nickname, password, **extra_fields):
+    def _create_user(self, username, password, **extra_fields):
 
         if not username:
             raise ValueError("아이디를 입력해주세요")
@@ -27,27 +34,26 @@ class UserManger(BaseUserManager):
             raise ValueError('비밀번호를 입력해주세요.')
 
         username = self.model.normalize_username(username)
-        nickname = self.model.normalize_username(nickname)
 
-        user = self.model(username=username, nickname=nickname, **extra_fields)
+        user = self.model(username=username, **extra_fields)
         user.set_password(password)
 
         user.save(using=self.db)
 
-    def create_user(self, username, nickname, password, **extra_fields):
+    def create_user(self, username, password, **extra_fields):
 
         extra_fields.setdefault('is_admin', False)
         extra_fields.setdefault('is_superuser', False)
 
-        return self._create_user(username, nickname, password, **extra_fields)
+        return self._create_user(username, password, **extra_fields)
 
-    def create_superuser(self, username, nickname, password, **extra_fields):
+    def create_superuser(self, username, password, **extra_fields):
 
         extra_fields.setdefault('is_admin', True)
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('birth', '2023-05-14')
 
-        return self._create_user(username, nickname, password, **extra_fields)
+        return self._create_user(username, password, **extra_fields)
 
 
 class User(AbstractBaseUser, PermissionsMixin):
@@ -55,14 +61,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     username_validator = UnicodeUsernameValidator()
     username = models.CharField(_("username"), max_length=20, validators=[username_validator], unique=True)
     password = models.CharField(_("password"), max_length=255)
-
-    nickname = models.CharField(_("nickname"), max_length=20)
-    email = models.EmailField(_("email"), max_length=50, null=True, blank=True)
-    gender = models.CharField(_("gender"), max_length=1, choices=GENDER)
-    phone = models.CharField(_("phone"), max_length=11, null=True, blank=True)
-    birth = models.DateField(_("birth"))
-    user_type = models.CharField(_("user_type"), max_length=10, choices=USERTYPE)
-
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateField(auto_now=True)
     refresh_token = models.CharField(_("refresh_token"), max_length=255, null=True, blank=True)
@@ -73,7 +71,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManger()
 
     USERNAME_FIELD = "username"
-    REQUIRED_FIELDS = ["nickname"]
 
     class Meta:
         verbose_name = _("user")
@@ -87,20 +84,62 @@ class User(AbstractBaseUser, PermissionsMixin):
         return self.is_admin
 
 
-class PrivacyPolicy(models.Model):
+class UserType(models.Model):
+    type_name = models.CharField(_("user_type"), max_length=10, choices=USERTYPE)
+    objects = models.Manager()
+
+    class Meta:
+        verbose_name = "회원유형"
+
+
+class Member(models.Model):
     user = models.ForeignKey(
         User,
-        related_name='user',
         on_delete=models.CASCADE,
+        blank=False,
+        null=False,
+    )
+    name = models.CharField(_("name"), max_length=20)
+    gender = models.CharField(_("gender"), max_length=1, choices=GENDER)
+    birth = models.DateField(_("birth"))
+    phone = models.CharField(_("phone"), max_length=11, null=True, blank=True)
+    email = models.EmailField(_("email"), max_length=50, null=True, blank=True)
+    user_type = models.ForeignKey(
+        UserType,
+        on_delete=models.PROTECT,
+        blank=True,
         null=True,
     )
-    TERM_OF_USE = models.BooleanField(_("term_of_use"), default=False)
-    PERSONAL_INFORMATION_COLLECT_AGREE = models.BooleanField(_("personal_info_collect_agree"), default=False)
-    PERSONAL_INFORMATION_UTIL_AGREE = models.BooleanField(_("personal_info_util_agree"), default=False)
-    MARKETING_INFORMATION_RECEIVE_AGREE = models.BooleanField(_("marketing_info_receive_agree"), default=False)
+
+    objects = models.Manager()
+
+    class Meta:
+        verbose_name = "회원정보"
+
+
+class PrivacyPolicy(models.Model):
+    title = models.CharField(_("name"), max_length=20, null=True)
+    content = models.TextField(_("name"), null=True)
+    is_necessary = models.BooleanField(_("is_necessary"), default=True)
 
     objects = models.Manager()
 
     class Meta:
         verbose_name = "개인정보 이용약관"
-        verbose_name_plural = "개인정보 이용약관"
+
+
+class PolicyAgree(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        null=True,
+    )
+    code = models.ForeignKey(
+        PrivacyPolicy,
+        on_delete=models.CASCADE,
+    )
+    is_consent = models.BooleanField(_("is_consent"), default=False)
+    consent_date = models.DateTimeField(_("consent_date"), auto_now_add=True)
+
+    class Meta:
+        verbose_name = "약관 동의여부"
