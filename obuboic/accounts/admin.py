@@ -11,19 +11,19 @@ from .models import User, Member
 
 # Register your models here.
 class UserAdmin(BaseUserAdmin):
-
     fieldsets = (
-        (None, {'fields': ('username', 'password')}),
+        (None,          {'fields': ('username', 'password')}),
         ('Permissions', {'fields': ('is_admin', 'is_active', )}),
-        ('Date info', {'fields': ('last_login', )}),
-        ('Auth info', {'fields': ('refresh_token', )})
+        ('Date info',   {'fields': ('last_login', 'created_at', )}),
+        ('Auth info',   {'fields': ('refresh_token', )})
     )
 
+    readonly_fields = ['created_at', ]
+
     add_fieldsets = (
-        (None, {
-            'classes': ('wide',),
-            'fields': ('username', 'password1', 'password2')}
-         ),
+        (None, {'classes': ('wide',),
+                'fields': ('username', 'password1', 'password2')}
+        ),
     )
 
     form = UserChangeForm

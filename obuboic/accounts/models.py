@@ -68,6 +68,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(_("active"), default=True)
     is_admin = models.BooleanField(default=False)
 
+    readonly_fields = ('created_at',)
     objects = UserManger()
 
     USERNAME_FIELD = "username"
