@@ -23,6 +23,7 @@ def home(request):
 # 회원가입
 @method_decorator(csrf_exempt, name='dispatch')
 class UserCreateView(APIView):
+    # 중복 아이디 확인 API
     def get(self, request):
         serializer = CheckUserIdSerializer(data=request.data)
 
@@ -31,12 +32,25 @@ class UserCreateView(APIView):
         else:
             return Response({"code": 400, "message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
+    # 회원가입 API
     def post(self, request):
         member_serializer = MemberSerializer(data=request.data)
         user_serializer = UserSerializer(data=request.data)
         consent_serializer = PrivacyPolicySerializer(data=request.data)
 
-        # 회원 정보 저장
+        # 회원 정보 인스턴스 선언
+        if member_serializer.is_valid():
+            member = Member(
+                name=member_serializer.validated_data["name"],
+                gender=member_serializer.validated_data["gender"],
+                birth=member_serializer.validated_data["birth"],
+                phone=member_serializer.validated_data["phone"],
+                email=member_serializer.validated_data["email"],
+            )
+        else:
+            return Response({"code": 400, "message": "회원가입 실패", "error": member_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 회원 관리 인스턴스 생성(User)
         if user_serializer.is_valid():
             User.objects.create_user(
                 username=user_serializer.validated_data["username"],
@@ -44,21 +58,11 @@ class UserCreateView(APIView):
             )
             user = get_object_or_404(User, username=user_serializer.validated_data["username"])
 
-            if member_serializer.is_valid():
-                Member.objects.create(
-                    user=user,
-                    name=member_serializer.validated_data["name"],
-                    gender=member_serializer.validated_data["gender"],
-                    birth=member_serializer.validated_data["birth"],
-                    phone=member_serializer.validated_data["phone"],
-                    email=member_serializer.validated_data["email"],
-                )
+            # 회원 정보 테이블 생성(Member)
+            member.user = user
+            member.save()
 
-                return Response({"code": 201, "message": "회원가입 완료"}, status=status.HTTP_201_CREATED)
-
-            else:
-                return Response({"code": 400, "message": "회원가입 실패", "error": member_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-
+            return Response({"code": 201, "message": "회원가입 완료"}, status=status.HTTP_201_CREATED)
         else:
             return Response({"code": 400, "message": "회원가입 실패", "error": user_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
