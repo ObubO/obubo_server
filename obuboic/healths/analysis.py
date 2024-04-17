@@ -361,10 +361,10 @@ class SimpleAnalysisDiagram:
             temp += weight * int(value)
 
         self.physic_score = CONVERT_PHYSIC[round(temp)]
-        self.physic_eat = int(physical["qa1"])
-        self.physic_bath = int(physical["qa2"])
-        self.physic_change = int(physical["qa3"])
-        self.physic_wash = int(physical["qa4"])
+        self.physic_eat = int(physical["physicalQuestionnaire1"])
+        self.physic_bath = int(physical["physicalQuestionnaire2"])
+        self.physic_change = int(physical["physicalQuestionnaire3"])
+        self.physic_wash = int(physical["physicalQuestionnaire4"])
 
         # -- 인지기능 설문 점수 저장 --#
         temp = 0
@@ -373,9 +373,9 @@ class SimpleAnalysisDiagram:
             temp += weight * int(value)
 
         self.recog_score = CONVERT_RECOG[round(temp)]
-        self.recog_demen = int(recognize["qa1"])
-        self.recog_env = int(recognize["qa2"])
-        self.recog_judge = int(recognize["qa3"])
+        self.recog_demen = int(recognize["recognizeQuestionnaire1"])
+        self.recog_env = int(recognize["recognizeQuestionnaire2"])
+        self.recog_judge = int(recognize["recognizeQuestionnaire3"])
 
         # -- 행동변화 설문 점수 저장 --#
         temp = 0
@@ -384,10 +384,10 @@ class SimpleAnalysisDiagram:
             temp += weight * int(value)
 
         self.behav_score = CONVERT_BEHAV[round(temp)]
-        self.behav_unstable = int(behavior["qa1"])
-        self.behav_chaos = int(behavior["qa2"])
-        self.behav_sad = int(behavior["qa3"])
-        self.behav_bad = int(behavior["qa4"])
+        self.behav_unstable = int(behavior["behaviorQuestionnaire1"])
+        self.behav_chaos = int(behavior["behaviorQuestionnaire2"])
+        self.behav_sad = int(behavior["behaviorQuestionnaire3"])
+        self.behav_bad = int(behavior["behaviorQuestionnaire4"])
 
         # -- 간호처치 설문 점수 저장 --#
         temp = 0
@@ -396,8 +396,8 @@ class SimpleAnalysisDiagram:
             temp += weight * int(value)
 
         self.nurse_score = CONVERT_NURSE[round(temp)]
-        self.nurse_press = int(nursing["qa1"])
-        self.nurse_dialy = int(nursing["qa2"])
+        self.nurse_press = int(nursing["nursingQuestionnaire1"])
+        self.nurse_dialy = int(nursing["nursingQuestionnaire2"])
 
         # -- 재활영역 설문 점수 저장 --#
         temp = 0
@@ -406,10 +406,10 @@ class SimpleAnalysisDiagram:
             temp += weight * int(value)
 
         self.rehab_score = CONVERT_REHAB[round(temp)]
-        self.rehab_right = int(rehab["qa1"])
-        self.rehab_left = int(rehab["qa2"])
-        self.rehab_low = int(rehab["qa3"])
-        self.rehab_up = int(rehab["qa4"])
+        self.rehab_right = int(rehab["rehabilitationQuestionnaire1"])
+        self.rehab_left = int(rehab["rehabilitationQuestionnaire2"])
+        self.rehab_low = int(rehab["rehabilitationQuestionnaire3"])
+        self.rehab_up = int(rehab["rehabilitationQuestionnaire4"])
 
     # == 청결 수형분석도 ==#
     def clean_diagram(self):
