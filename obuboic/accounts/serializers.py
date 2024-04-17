@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import UserType, User, Member, PrivacyPolicy, PolicyAgree
+from .models import UserType, User, Member, TAC, TACAgree
 
 
 class UserTypeSerializer(serializers.ModelSerializer):
@@ -32,17 +32,17 @@ class MemberSerializer(serializers.ModelSerializer):
         fields = ['name', 'gender', 'birth', 'phone', 'email', ]
 
 
-class PrivacyPolicySerializer(serializers.ModelSerializer):
+class TACSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = PrivacyPolicy
+        model = TAC
         fields = '__all__'
 
 
-class PolicyAgreeSerializer(serializers.ModelSerializer):
+class TACAgreeSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = PolicyAgree
-        fields = '__all__'
+        model = TACAgree
+        fields = ['is_consent', ]
 
 

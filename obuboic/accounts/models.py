@@ -14,11 +14,9 @@ USERTYPE = {
     ('Guard', '보호자'),
 }
 
-PRIVACY_POLICY = {
-    ('TERM_OF_USE', '이용약관1'),
-    ('PERSONAL_INFORMATION_COLLECT_AGREE', '이용약관2'),
-    ('PERSONAL_INFORMATION_UTIL_AGREE', '이용약관3'),
-    ('MARKETING_INFORMATION_RECEIVE_AGREE', '이용약관4'),
+CONSENT = {
+    ('T', '동의'),
+    ('F', '비동의'),
 }
 
 
@@ -51,7 +49,6 @@ class UserManger(BaseUserManager):
 
         extra_fields.setdefault('is_admin', True)
         extra_fields.setdefault('is_superuser', True)
-        extra_fields.setdefault('birth', '2023-05-14')
 
         return self._create_user(username, password, **extra_fields)
 
@@ -118,7 +115,7 @@ class Member(models.Model):
         return self.name
 
 
-class PrivacyPolicy(models.Model):
+class TAC(models.Model):
     title = models.CharField(_("name"), max_length=20)
     content = models.TextField(_("name"))
     is_necessary = models.BooleanField(_("is_necessary"), default=True)
@@ -128,18 +125,26 @@ class PrivacyPolicy(models.Model):
     class Meta:
         verbose_name = "개인정보 이용약관"
 
+    def __str__(self):
+        return self.title
 
-class PolicyAgree(models.Model):
+
+class TACAgree(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
     )
-    code = models.ForeignKey(
-        PrivacyPolicy,
+    tac = models.ForeignKey(
+        TAC,
         on_delete=models.CASCADE,
     )
-    is_consent = models.BooleanField(_("is_consent"), default=False)
+    is_consent = models.CharField(_("is_consent"), max_length=1, choices=CONSENT)
     consent_date = models.DateTimeField(_("consent_date"), auto_now_add=True)
 
+    objects = models.Manager()
+
     class Meta:
-        verbose_name = "약관 동의여부"
+        verbose_name = "약관 동의"
+
+    def __str__(self):
+        return self.user.username

@@ -9,8 +9,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 from rest_framework_simplejwt.views import TokenRefreshView
-from .models import User, UserType, Member, PrivacyPolicy, PolicyAgree
-from .serializers import UserSerializer, UserTypeSerializer, MemberSerializer, CustomUserSerializer, CheckUserIdSerializer, PrivacyPolicySerializer, PolicyAgreeSerializer
+from .models import User, UserType, Member, TAC, TACAgree
+from .serializers import UserSerializer, UserTypeSerializer, MemberSerializer, CustomUserSerializer, CheckUserIdSerializer, TACAgreeSerializer
 from datetime import datetime
 
 SECRET_KEY = getattr(settings, 'SECRET_KEY', 'SECRET_KEY')
@@ -23,6 +23,7 @@ def home(request):
 # 회원가입
 @method_decorator(csrf_exempt, name='dispatch')
 class UserCreateView(APIView):
+
     # 중복 아이디 확인 API
     def get(self, request):
         serializer = CheckUserIdSerializer(data=request.data)
@@ -36,7 +37,7 @@ class UserCreateView(APIView):
     def post(self, request):
         member_serializer = MemberSerializer(data=request.data)
         user_serializer = UserSerializer(data=request.data)
-        consent_serializer = PrivacyPolicySerializer(data=request.data)
+        consent_serializer = TACAgreeSerializer(data=request.data)
 
         # 회원 정보 인스턴스 선언
         if member_serializer.is_valid():
@@ -61,6 +62,17 @@ class UserCreateView(APIView):
             # 회원 정보 테이블 생성(Member)
             member.user = user
             member.save()
+
+            # 약관 동의 테이블 생성
+            tacs = [[1, 'tac1'], [2, 'tac2'], [3, 'tac3'], [4, 'tac4']]
+            for tac in tacs:
+                code, consent = tac[0], tac[1]
+                TACAgree.objects.create(
+                    user=user,
+                    tac=get_object_or_404(TAC, id=code),
+                    is_consent=request.data[consent],
+                    consent_date=datetime.now(),
+                )
 
             return Response({"code": 201, "message": "회원가입 완료"}, status=status.HTTP_201_CREATED)
         else:

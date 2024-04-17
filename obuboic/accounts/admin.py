@@ -6,7 +6,7 @@ from django.contrib.auth.forms import ReadOnlyPasswordHashField
 
 from django.contrib.auth.forms import UserChangeForm, UserCreationForm
 
-from .models import User, Member, UserType
+from .models import User, Member, UserType, TAC, TACAgree
 
 
 # Register your models here.
@@ -48,7 +48,26 @@ class UserTypeAdmin(admin.ModelAdmin):
     list_display = ('type_name', )
 
 
+class TACAdmin(admin.ModelAdmin):
+    fields = ['title', 'content', 'is_necessary', ]
+    list_display = ('title', )
+
+    readonly_fields = ['title', 'content', 'is_necessary', ]
+
+
+class TACAgreeAdmin(admin.ModelAdmin):
+    fields = ['user', 'tac', 'is_consent', 'consent_date', ]
+    list_display = ('user', 'tac', 'is_consent', )
+
+    readonly_fields = ['user', 'tac', 'is_consent', 'consent_date', ]
+
+    search_fields = ('user',)
+    ordering = ('user',)
+
+
 admin.site.register(User, UserAdmin)
 admin.site.register(Member, MemberAdmin)
 admin.site.register(UserType, UserTypeAdmin)
+admin.site.register(TAC, TACAdmin)
+admin.site.register(TACAgree, TACAgreeAdmin)
 admin.site.unregister(Group)
