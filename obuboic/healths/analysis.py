@@ -36,7 +36,7 @@ REHAB_DIC = {0: 4.3, 1: 3.0, 2: 4.3, 3: 5.5, 4: 2.5, 5: 3.7, 6: 4.6, 7: 3.1, 8: 
 class AnalysisDiagram:
     physic_score,       recog_score,         behav_score,        nurse_score,        rehab_score = 0, 0, 0, 0, 0
     physic_clothes,     physic_wash_face,    physic_brush_teeth, physic_take_bath,   physic_eat,        physic_change_position, physic_stand_sit,   physic_move_sit,      physic_room_out,  physic_use_bathroom, physic_control_defecation, physic_control_fee = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-    recog_short_memory, recog_date,          recog_place,        recog_age,          recog_indicate,    recog_judge,            recog_commu = 0, 0, 0, 0, 0, 0, 0
+    recog_demen,        recog_short_memory,  recog_date,         recog_place,        recog_age,         recog_indicate,         recog_judge,        recog_commu = 0, 0, 0, 0, 0, 0, 0, 0
     behav_delusion,     behav_hallucination, behav_sad,          behav_chaos,        behav_resistance,  behav_unstable,         behav_lost,         behav_bad_aggressive, behav_go_outside, behav_break,         behav_bad_behav,   behav_hide,   behav_bad_dress,       behav_bad_bath = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
     nurse_bronchial,    nurse_suction,       nurse_oxygen,       nurse_press,        nurse_camouflage,  nurse_pain,             nurse_fee,          nurse_jangru,         nurse_dialysis = 0, 0, 0, 0, 0, 0, 0, 0, 0
     rehab_right_up,     rehab_right_down,   rehab_left_up,      rehab_left_down = 0, 0, 0, 0
@@ -53,18 +53,18 @@ class AnalysisDiagram:
 
         self.physic_score = CONVERT_PHYSIC[score]
 
-        self.physic_clothes = int(physical["qa1"])
-        self.physic_wash_face = int(physical["qa2"])
-        self.physic_brush_teeth = int(physical["qa3"])
-        self.physic_take_bath = int(physical["qa4"])
-        self.physic_eat = int(physical["qa5"])
-        self.physic_change_position = int(physical["qa6"])
-        self.physic_stand_sit = int(physical["qa7"])
-        self.physic_move_sit = int(physical["qa8"])
-        self.physic_room_out = int(physical["qa9"])
-        self.physic_use_bathroom = int(physical["qa10"])
-        self.physic_control_defecation = int(physical["qa11"])
-        self.physic_control_fee = int(physical["qa12"])
+        self.physic_clothes = int(physical["physicalQuestionnaire1"])
+        self.physic_wash_face = int(physical["physicalQuestionnaire2"])
+        self.physic_brush_teeth = int(physical["physicalQuestionnaire3"])
+        self.physic_take_bath = int(physical["physicalQuestionnaire4"])
+        self.physic_eat = int(physical["physicalQuestionnaire5"])
+        self.physic_change_position = int(physical["physicalQuestionnaire6"])
+        self.physic_stand_sit = int(physical["physicalQuestionnaire7"])
+        self.physic_move_sit = int(physical["physicalQuestionnaire8"])
+        self.physic_room_out = int(physical["physicalQuestionnaire9"])
+        self.physic_use_bathroom = int(physical["physicalQuestionnaire10"])
+        self.physic_control_defecation = int(physical["physicalQuestionnaire11"])
+        self.physic_control_fee = int(physical["physicalQuestionnaire12"])
 
         # -- 인지기능 설문 점수 저장 --#
         score = 0
@@ -73,13 +73,14 @@ class AnalysisDiagram:
 
         self.recog_score = CONVERT_RECOG[score]
 
-        self.recog_short_memory = int(recognize["qa1"])
-        self.recog_date = int(recognize["qa2"])
-        self.recog_place = int(recognize["qa3"])
-        self.recog_age = int(recognize["qa4"])
-        self.recog_indicate = int(recognize["qa5"])
-        self.recog_judge = int(recognize["qa6"])
-        self.recog_commu = int(recognize["qa7"])
+        self.recog_demen = int(recognize["recognizeQuestionnaire1"])
+        self.recog_short_memory = int(recognize["recognizeQuestionnaire2"])
+        self.recog_date = int(recognize["recognizeQuestionnaire3"])
+        self.recog_place = int(recognize["recognizeQuestionnaire4"])
+        self.recog_age = int(recognize["recognizeQuestionnaire5"])
+        self.recog_indicate = int(recognize["recognizeQuestionnaire6"])
+        self.recog_judge = int(recognize["recognizeQuestionnaire7"])
+        self.recog_commu = int(recognize["recognizeQuestionnaire8"])
 
         # -- 행동변화 설문 점수 저장 --#
         score = 0
@@ -88,20 +89,20 @@ class AnalysisDiagram:
 
         self.behav_score = CONVERT_BEHAV[score]
 
-        self.behav_delusion = int(behavior["qa1"])
-        self.behav_hallucination = int(behavior["qa2"])
-        self.behav_sad = int(behavior["qa3"])
-        self.behav_chaos = int(behavior["qa4"])
-        self.behav_resistance = int(behavior["qa5"])
-        self.behav_unstable = int(behavior["qa6"])
-        self.behav_lost = int(behavior["qa7"])
-        self.behav_bad_aggressive = int(behavior["qa8"])
-        self.behav_go_outside = int(behavior["qa9"])
-        self.behav_break = int(behavior["qa10"])
-        self.behav_bad_behav = int(behavior["qa11"])
-        self.behav_hide = int(behavior["qa12"])
-        self.behav_bad_dress = int(behavior["qa13"])
-        self.behav_bad_bath = int(behavior["qa14"])
+        self.behav_delusion = int(behavior["behaviorQuestionnaire1"])
+        self.behav_hallucination = int(behavior["behaviorQuestionnaire2"])
+        self.behav_sad = int(behavior["behaviorQuestionnaire3"])
+        self.behav_chaos = int(behavior["behaviorQuestionnaire4"])
+        self.behav_resistance = int(behavior["behaviorQuestionnaire5"])
+        self.behav_unstable = int(behavior["behaviorQuestionnaire6"])
+        self.behav_lost = int(behavior["behaviorQuestionnaire7"])
+        self.behav_bad_aggressive = int(behavior["behaviorQuestionnaire8"])
+        self.behav_go_outside = int(behavior["behaviorQuestionnaire9"])
+        self.behav_break = int(behavior["behaviorQuestionnaire10"])
+        self.behav_bad_behav = int(behavior["behaviorQuestionnaire11"])
+        self.behav_hide = int(behavior["behaviorQuestionnaire12"])
+        self.behav_bad_dress = int(behavior["behaviorQuestionnaire13"])
+        self.behav_bad_bath = int(behavior["behaviorQuestionnaire14"])
 
         # -- 간호처치 설문 점수 저장 --#
         score = 0
@@ -110,15 +111,15 @@ class AnalysisDiagram:
 
         self.nurse_score = CONVERT_NURSE[score]
 
-        self.nurse_bronchial = int(nursing["qa1"])
-        self.nurse_suction = int(nursing["qa2"])
-        self.nurse_oxygen = int(nursing["qa3"])
-        self.nurse_press = int(nursing["qa4"])
-        self.nurse_camouflage = int(nursing["qa5"])
-        self.nurse_pain = int(nursing["qa6"])
-        self.nurse_fee = int(nursing["qa7"])
-        self.nurse_jangru = int(nursing["qa8"])
-        self.nurse_dialysis = int(nursing["qa9"])
+        self.nurse_bronchial = int(nursing["nursingQuestionnaire1"])
+        self.nurse_suction = int(nursing["nursingQuestionnaire2"])
+        self.nurse_oxygen = int(nursing["nursingQuestionnaire3"])
+        self.nurse_press = int(nursing["nursingQuestionnaire4"])
+        self.nurse_camouflage = int(nursing["nursingQuestionnaire5"])
+        self.nurse_pain = int(nursing["nursingQuestionnaire6"])
+        self.nurse_fee = int(nursing["nursingQuestionnaire7"])
+        self.nurse_jangru = int(nursing["nursingQuestionnaire8"])
+        self.nurse_dialysis = int(nursing["nursingQuestionnaire9"])
 
         # -- 재활영역 설문 점수 저장 --#
         score = 0
@@ -127,16 +128,16 @@ class AnalysisDiagram:
 
         self.rehab_score = CONVERT_REHAB[score]
 
-        self.rehab_right_up = int(rehab["qa1"])
-        self.rehab_right_down = int(rehab["qa2"])
-        self.rehab_left_up = int(rehab["qa3"])
-        self.rehab_left_down = int(rehab["qa4"])
-        self.rehab_join_shoulder = int(rehab["qa5"])
-        self.rehab_joint_elbow = int(rehab["qa6"])
-        self.rehab_joint_wrist = int(rehab["qa7"])
-        self.rehab_joint_hip = int(rehab["qa8"])
-        self.rehab_joint_knee = int(rehab["qa9"])
-        self.rehab_joint_ankle = int(rehab["qa10"])
+        self.rehab_right_up = int(rehab["rehabilitationQuestionnaire1"])
+        self.rehab_right_down = int(rehab["rehabilitationQuestionnaire2"])
+        self.rehab_left_up = int(rehab["rehabilitationQuestionnaire3"])
+        self.rehab_left_down = int(rehab["rehabilitationQuestionnaire4"])
+        self.rehab_join_shoulder = int(rehab["rehabilitationQuestionnaire5"])
+        self.rehab_joint_elbow = int(rehab["rehabilitationQuestionnaire6"])
+        self.rehab_joint_wrist = int(rehab["rehabilitationQuestionnaire7"])
+        self.rehab_joint_hip = int(rehab["rehabilitationQuestionnaire8"])
+        self.rehab_joint_knee = int(rehab["rehabilitationQuestionnaire9"])
+        self.rehab_joint_ankle = int(rehab["rehabilitationQuestionnaire10"])
 
     def clean_diagram(self):
         if self.physic_score <= 34.15:
