@@ -15,8 +15,8 @@ USERTYPE = {
 }
 
 CONSENT = {
-    ('T', '동의'),
-    ('F', '비동의'),
+    ('True', '동의'),
+    ('False', '비동의'),
 }
 
 
@@ -138,7 +138,7 @@ class TACAgree(models.Model):
         TAC,
         on_delete=models.CASCADE,
     )
-    is_consent = models.CharField(_("is_consent"), max_length=1, choices=CONSENT)
+    is_consent = models.CharField(_("is_consent"), max_length=5, choices=CONSENT)
     consent_date = models.DateTimeField(_("consent_date"), auto_now_add=True)
 
     objects = models.Manager()
