@@ -1,4 +1,5 @@
 import jwt
+from django.http import QueryDict
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth import authenticate
 from django.conf import settings
@@ -26,7 +27,10 @@ class UserCreateView(APIView):
 
     # 중복 아이디 확인 API
     def get(self, request):
-        serializer = CheckUserIdSerializer(data=request.data)
+        data = request.GET.urlencode()
+        query_dict = QueryDict(data)
+
+        serializer = CheckUserIdSerializer(data=query_dict)
 
         if serializer.is_valid():
             return Response({"code": 200, "message": "사용가능한 ID 입니다"}, status=status.HTTP_200_OK)
