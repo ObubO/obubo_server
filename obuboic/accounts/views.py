@@ -11,7 +11,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 from rest_framework_simplejwt.views import TokenRefreshView
 from .models import User, UserType, Member, TAC, TACAgree
-from .serializers import UserSerializer, UserTypeSerializer, MemberSerializer, CustomUserSerializer, CheckUserIdSerializer, TACAgreeSerializer
+from .serializers import UserSerializer, UserTypeSerializer, MemberSerializer, CheckUserIdSerializer, TACAgreeSerializer
 from datetime import datetime
 
 SECRET_KEY = getattr(settings, 'SECRET_KEY', 'SECRET_KEY')
@@ -95,7 +95,8 @@ class AuthView(APIView):
             # 사용자 조회
             pk = payload.get('user_id')
             user = get_object_or_404(User, pk=pk)
-            serializer = CustomUserSerializer(instance=user)
+            member = get_object_or_404(Member, user=user)
+            serializer = MemberSerializer(instance=member)
 
             return Response({"code": 200, "message": "사용자 조회 성공", "result": {"user": serializer.data}}, status=status.HTTP_200_OK)
 
