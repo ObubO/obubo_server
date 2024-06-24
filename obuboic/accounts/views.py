@@ -1,4 +1,5 @@
 import jwt
+import random
 from django.http import QueryDict
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth import authenticate
@@ -10,8 +11,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 from rest_framework_simplejwt.views import TokenRefreshView
-from .models import User, UserType, Member, TAC, TACAgree
-from .serializers import UserSerializer, UserTypeSerializer, MemberSerializer, CheckUserIdSerializer, TACAgreeSerializer
+from .models import User, Member, TAC, TACAgree
+from .serializers import UserSerializer, MemberSerializer, CheckUserIdSerializer
 from datetime import datetime
 
 SECRET_KEY = getattr(settings, 'SECRET_KEY', 'SECRET_KEY')
@@ -21,11 +22,12 @@ def home(request):
     return render(request, 'index.html')
 
 
-# 회원가입
+# -- 회원가입 -- #
+
 @method_decorator(csrf_exempt, name='dispatch')
 class UserCreateView(APIView):
 
-    # 중복 아이디 확인 API
+    # 중복 아이디 확인
     def get(self, request):
         data = request.GET.urlencode()
         query_dict = QueryDict(data)
@@ -37,37 +39,41 @@ class UserCreateView(APIView):
         else:
             return Response({"code": 400, "message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
-    # 회원가입 API
+    # 회원가입
     def post(self, request):
         member_serializer = MemberSerializer(data=request.data)
         user_serializer = UserSerializer(data=request.data)
-        consent_serializer = TACAgreeSerializer(data=request.data)
 
-        # 회원 정보 인스턴스 선언
+        # 회원관리(User) 인스턴스 생성
+        if user_serializer.is_valid():
+            username = user_serializer.validated_data["username"]   # 회원 구분 key
+
+            User.objects.create_user(
+                username=username,
+                password=user_serializer.validated_data["password"],
+            )
+
+            user = get_object_or_404(User, username=username)
+
+        else:
+            return Response({"code": 400, "message": "회원가입 실패", "error": user_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 회원정보(Member) 인스턴스 선언
         if member_serializer.is_valid():
             member = Member(
+                user=user,
                 name=member_serializer.validated_data["name"],
                 gender=member_serializer.validated_data["gender"],
                 birth=member_serializer.validated_data["birth"],
                 phone=member_serializer.validated_data["phone"],
                 email=member_serializer.validated_data["email"],
             )
+
         else:
             return Response({"code": 400, "message": "회원가입 실패", "error": member_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 회원 관리 인스턴스 생성(User)
-        if user_serializer.is_valid():
-            User.objects.create_user(
-                username=user_serializer.validated_data["username"],
-                password=user_serializer.validated_data["password"],
-            )
-            user = get_object_or_404(User, username=user_serializer.validated_data["username"])
-
-            # 회원 정보 테이블 생성(Member)
-            member.user = user
-            member.save()
-
-            # 약관 동의 테이블 생성
+        # 약관동의 인스턴스 생성
+        try:
             tacs = [[1, 'tac1'], [2, 'tac2'], [3, 'tac3'], [4, 'tac4']]
             for tac in tacs:
                 code, consent = tac[0], tac[1]
@@ -77,10 +83,13 @@ class UserCreateView(APIView):
                     is_consent=request.data[consent],
                     consent_date=datetime.now(),
                 )
+            member.save()
 
             return Response({"code": 201, "message": "회원가입 완료"}, status=status.HTTP_201_CREATED)
-        else:
-            return Response({"code": 400, "message": "회원가입 실패", "error": user_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+        except:
+            User.objects.filter(username=username).delete()
+            return Response({"code": 400, "message": "회원가입 실패", "error": "e"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 # 계정 조회/수정 API
@@ -101,11 +110,11 @@ class AuthView(APIView):
             return Response({"code": 200, "message": "사용자 조회 성공", "result": {"user": serializer.data}}, status=status.HTTP_200_OK)
 
         # Access_Token 기간 만료
-        except(jwt.exceptions.ExpiredSignatureError):
+        except jwt.exceptions.ExpiredSignatureError:
             return Response({"code": 401, "message": "토큰의 유효기간이 만료되었습니다"}, status=status.HTTP_401_UNAUTHORIZED)
 
         # 사용 불가능 토큰
-        except(jwt.exceptions.InvalidTokenError):
+        except jwt.exceptions.InvalidTokenError:
             return Response({"code": 400, "message": "유효하지 않은 토큰입니다"}, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -157,7 +166,7 @@ class LogoutView(APIView):
 
             return Response({"code": 200, "message": "로그아웃 성공"}, status=status.HTTP_200_OK)
 
-        except(jwt.exceptions.InvalidTokenError):
+        except jwt.exceptions.InvalidTokenError:
             return Response({"code": 400, "message": "유효하지 않은 토큰입니다"}, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -194,9 +203,9 @@ class CustomTokenRefreshView(TokenRefreshView):
                 return Response({"code": 403, "message": "사용자가 삭제한 토큰입니다"}, status=status.HTTP_403_FORBIDDEN)
 
         # 기간 만료된 토큰
-        except(jwt.exceptions.ExpiredSignatureError):
+        except jwt.exceptions.ExpiredSignatureError:
             return Response({"code": 401, "message": "기간이 만료된 토큰입니다"}, status=status.HTTP_401_UNAUTHORIZED)
 
         # 사용 불가능 토큰
-        except(jwt.exceptions.InvalidTokenError):
+        except jwt.exceptions.InvalidTokenError:
             return Response({"code": 400, "message": "사용할 수 없는 토큰입니다"}, status=status.HTTP_400_BAD_REQUEST)
