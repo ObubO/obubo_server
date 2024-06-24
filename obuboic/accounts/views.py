@@ -151,10 +151,10 @@ class LoginView(APIView):
 @method_decorator(csrf_exempt, name='dispatch')
 class LogoutView(APIView):
     def post(self, request):
-        access = request.headers.get('Authorization', None)
+        refresh = request.headers.get('Authorization', None)
         try:
-            # JWT 인증(Access Token)
-            payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'])
+            # JWT 인증(Refesh Token) - 기간만료 무시
+            payload = jwt.decode(refresh, SECRET_KEY, algorithms=['HS256'], options={"verify_exp": False})
 
             # 사용자 조회
             pk = payload.get('user_id')
