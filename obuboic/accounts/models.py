@@ -101,8 +101,8 @@ class Member(models.Model):
     name = models.CharField(_("name"), max_length=20)
     gender = models.CharField(_("gender"), max_length=1, choices=GENDER)
     birth = models.DateField(_("birth"))
-    phone = models.CharField(_("phone"), max_length=11, null=True, blank=True)
-    email = models.EmailField(_("email"), max_length=50, null=True, blank=True)
+    phone = models.CharField(_("phone"), max_length=11, blank=True, unique=True)
+    email = models.EmailField(_("email"), max_length=50, null=True, blank=True, unique=True)
     user_type = models.ForeignKey(
         UserType,
         on_delete=models.PROTECT,

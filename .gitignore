@@ -163,6 +163,6 @@ obuboic/db.sqlite3
 __pycache__
 *.pyc
 
-migrations
-
 secrets.json
+
+logs
