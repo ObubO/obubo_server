@@ -1,5 +1,6 @@
 import jwt
 import random
+from datetime import datetime, timedelta
 from django.http import QueryDict
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth import authenticate
@@ -11,11 +12,14 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 from rest_framework_simplejwt.views import TokenRefreshView
-from .models import User, Member, TAC, TACAgree
-from .serializers import UserSerializer, MemberSerializer, CheckUserIdSerializer
-from datetime import datetime
+from .models import User, Member, TAC, TACAgree, Certify
+from .serializers import UserSerializer, MemberSerializer, CheckUserIdSerializer, CertifySerializer
+from sms import message
+
 
 SECRET_KEY = getattr(settings, 'SECRET_KEY', 'SECRET_KEY')
+SMS_API_KEY = getattr(settings, "SMS_API_KEY")
+SMS_API_SECRET = getattr(settings, "SMS_API_SECRET")
 
 
 def home(request):
@@ -209,3 +213,51 @@ class CustomTokenRefreshView(TokenRefreshView):
         # 사용 불가능 토큰
         except jwt.exceptions.InvalidTokenError:
             return Response({"code": 400, "message": "사용할 수 없는 토큰입니다"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AuthRequest(APIView):
+    def post(self, request):
+        # 데이터 유효성 검사
+        cert_serializer = CertifySerializer(data=request.data)
+
+        # 인증 정보 저장
+        if cert_serializer.is_valid():
+            phone = cert_serializer.validated_data["phone"]
+            code = str(random.randint(100000, 999999))
+
+            Certify.objects.create(phone=phone, code=code)
+
+            # 인증 코드 전송
+            res_code = message.send_sms(SMS_API_KEY, SMS_API_SECRET, phone, code)
+
+            if res_code == 200:
+                return Response({"code": 200, "message": "인증문자 전송 성공"}, status=status.HTTP_200_OK)
+            else:
+                return Response({"code": 503, "message": "인증문자 전송 실패"}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        else:
+            return Response({"code": 400, "message": "전화번호 유효성 검사 실패"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AuthVerify(APIView):
+    def post(self, request):
+        phone = request.data["phone"]
+        code = request.data["code"]
+
+        # 현재 시간 체크
+        current_time = datetime.now()
+
+        # 인증 데이터 조회
+        cert = Certify.objects.filter(phone=phone).order_by('-created_at').first()
+        serialier = CertifySerializer(instance=cert)
+        db_code = serialier.data['code']
+        db_time = datetime.strptime(serialier.data['created_at'], "%Y-%m-%dT%H:%M:%S.%f")
+
+        # 인증번호 유효성 검사
+        time_difference = current_time - db_time
+        if code == db_code:
+            if time_difference <= timedelta(minutes=3):
+                return Response({"code": 200, "message": "인증 성공"}, status=status.HTTP_200_OK)
+            else:
+                return Response({"code": 401, "message": "인증번호 시간 초과"}, status=status.HTTP_401_UNAUTHORIZED)
+        else:
+            return Response({"code": 400, "message": "인증번호 불일치"}, status=status.HTTP_400_BAD_REQUEST)

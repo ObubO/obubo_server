@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     # my_apps
     'accounts',
     'healths',
+    'sms',
 
 ]
 
@@ -249,3 +250,6 @@ LOGGING = {
         },
     }
 }
+
+SMS_API_KEY = get_secret('SMS_API_KEY')
+SMS_API_SECRET = get_secret("SMS_API_SECRET")

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import UserType, User, Member, TAC, TACAgree
+from .models import UserType, User, Member, TAC, TACAgree, Certify
 
 
 class UserTypeSerializer(serializers.ModelSerializer):
@@ -39,4 +39,10 @@ class TACAgreeSerializer(serializers.ModelSerializer):
         model = TACAgree
         fields = ['is_consent', ]
 
+
+class CertifySerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Certify
+        fields = '__all__'
 
