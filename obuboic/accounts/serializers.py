@@ -40,7 +40,14 @@ class TACAgreeSerializer(serializers.ModelSerializer):
         fields = ['is_consent', ]
 
 
-class CertifySerializer(serializers.ModelSerializer):
+class CertifyPhoneSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Certify
+        fields = ['phone']
+
+
+class CertifyAllSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Certify
