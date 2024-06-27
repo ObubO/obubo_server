@@ -13,7 +13,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 from rest_framework_simplejwt.views import TokenRefreshView
 from .models import User, Member, TAC, TACAgree, Certify
-from .serializers import UserSerializer, MemberSerializer, CheckUserIdSerializer, CertifyPhoneSerializer, CertifyAllSerializer
+from .serializers import UserSerializer, UserPasswordSerializer, MemberSerializer, CheckUserIdSerializer, CertifyPhoneSerializer, CertifyAllSerializer
 from sms import message
 
 
@@ -30,12 +30,9 @@ def home(request):
 
 @method_decorator(csrf_exempt, name='dispatch')
 class UserCreateView(APIView):
-
     # 중복 아이디 확인
-    def get(self, request):
-        data = request.GET.urlencode()
-        query_dict = QueryDict(data)
-
+    def get(self, request, username):
+        query_dict = QueryDict('username='+username)
         serializer = CheckUserIdSerializer(data=query_dict)
 
         if serializer.is_valid():
@@ -215,6 +212,7 @@ class CustomTokenRefreshView(TokenRefreshView):
             return Response({"code": 400, "message": "사용할 수 없는 토큰입니다"}, status=status.HTTP_400_BAD_REQUEST)
 
 
+# -- 전화번호 인증코드 요청 -- #
 class AuthRequest(APIView):
     def post(self, request):
         # 데이터 유효성 검사
@@ -238,6 +236,40 @@ class AuthRequest(APIView):
             return Response({"code": 400, "message": "전화번호 유효성 검사 실패"}, status=status.HTTP_400_BAD_REQUEST)
 
 
+# -- 회원 인증코드 요청 -- #
+class AuthUserRequest(APIView):
+    def get(self, request, username):
+        user_exist = User.objects.filter(username=username).exists()
+
+        if user_exist:
+            return Response({"code": 200}, status=status.HTTP_200_OK)
+        else:
+            return Response({"code": 400}, status=status.HTTP_400_BAD_REQUEST)
+
+    def post(self, request):
+        username = request.data['username']
+        phone = request.data['phone']
+
+        # 회원 조회
+        user = get_object_or_404(User, username=username)
+        member = get_object_or_404(Member, user=user)
+        db_serializer = MemberSerializer(instance=member)
+        db_phone = db_serializer.data['phone']
+
+        if phone == db_phone:
+            # 인증코드 발급
+            code = str(random.randint(100000, 999999))
+            Certify.objects.create(phone=phone, code=code)
+
+            # 인증코드 전송
+            # res_code = message.send_sms(SMS_API_KEY, SMS_API_SECRET, phone, code)
+            res_code = 200
+            return Response({"code": 200, "message": "인증문자 전송 성공"}, status=status.HTTP_200_OK)
+        else:
+            return Response({"code": 401, "message": "DB에 저장된 전화번호와 입력한 전화번호 불일치"}, status=status.HTTP_401_UNAUTHORIZED)
+
+
+# -- 인증코드 확인 -- #
 class AuthVerify(APIView):
     def post(self, request):
         phone = request.data["phone"]
@@ -248,9 +280,9 @@ class AuthVerify(APIView):
 
         # 인증 데이터 조회
         cert = Certify.objects.filter(phone=phone).order_by('-created_at').first()
-        serialier = CertifyAllSerializer(instance=cert)
-        db_code = serialier.data['code']
-        db_time = datetime.strptime(serialier.data['created_at'], "%Y-%m-%dT%H:%M:%S.%f")
+        serializer = CertifyAllSerializer(instance=cert)
+        db_code = serializer.data['code']
+        db_time = datetime.strptime(serializer.data['created_at'], "%Y-%m-%dT%H:%M:%S.%f")
 
         # 인증번호 유효성 검사
         time_difference = current_time - db_time
@@ -261,3 +293,21 @@ class AuthVerify(APIView):
                 return Response({"code": 401, "message": "인증번호 시간 초과"}, status=status.HTTP_401_UNAUTHORIZED)
         else:
             return Response({"code": 400, "message": "인증번호 불일치"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+# -- 비밀번호 변경 -- #
+class ChangePassword(APIView):
+    def post(self, request):
+        serializer = UserPasswordSerializer(data=request.data)
+        username = request.data['username']
+
+        if serializer.is_valid():
+            password = serializer.validated_data['password']
+
+            user = get_object_or_404(User, username=username)
+            user.set_password(password)
+            user.save()
+
+            return Response({"code": 200, "message": "비밀번호 변경 성공"}, status=status.HTTP_200_OK)
+        else:
+            return Response({"code": 400, "message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)

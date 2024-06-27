@@ -5,12 +5,21 @@ urlpatterns = [
     path('', views.home, name='home'),
     path('join/', views.UserCreateView.as_view()),
     path('join/<str:username>/', views.UserCreateView.as_view()),
+
     path('login/', views.LoginView.as_view()),
     path('logout/', views.LogoutView.as_view()),
+
     path('token/refresh/', views.CustomTokenRefreshView.as_view()),
-    path('profile/', views.AuthView.as_view()),
+
     path('auth/request/', views.AuthRequest.as_view()),
+    path('auth/request/user/', views.AuthUserRequest.as_view()),
+    path('auth/request/user/<str:username>/', views.AuthUserRequest.as_view()),
     path('auth/verify/', views.AuthVerify.as_view()),
+
+    path('user/profile/', views.AuthView.as_view()),
+    path('user/password/', views.ChangePassword.as_view()),
+
+
 
 ]
 

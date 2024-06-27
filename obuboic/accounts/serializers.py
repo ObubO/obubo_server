@@ -14,6 +14,12 @@ class UserSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class UserPasswordSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['password']
+
+
 class CheckUserIdSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
