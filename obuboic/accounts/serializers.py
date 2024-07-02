@@ -32,6 +32,12 @@ class MemberSerializer(serializers.ModelSerializer):
         fields = ['name', 'gender', 'birth', 'phone', 'email', ]
 
 
+class CheckMemberNameSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Member
+        fields = ['name', ]
+
+
 class TACSerializer(serializers.ModelSerializer):
 
     class Meta:

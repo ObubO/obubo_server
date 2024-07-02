@@ -7,7 +7,6 @@ from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.utils.translation import gettext_lazy as _
 
-
 GENDER = {
         ("M", "MAN"),
         ("W", "WOMAN"),
@@ -98,7 +97,7 @@ class Member(models.Model):
         User,
         on_delete=models.CASCADE,
     )
-    name = models.CharField(_("name"), max_length=20)
+    name = models.CharField(_("name"), max_length=20, unique=True)
     gender = models.CharField(_("gender"), max_length=1, choices=GENDER)
     birth = models.DateField(_("birth"))
     phone = models.CharField(_("phone"), max_length=11, blank=True, unique=True)
@@ -116,7 +115,8 @@ class Member(models.Model):
         verbose_name = "회원정보"
 
     def __str__(self):
-        return self.name
+        return self.\
+            name
 
 
 class TAC(models.Model):

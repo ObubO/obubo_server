@@ -13,7 +13,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 from rest_framework_simplejwt.views import TokenRefreshView
 from .models import User, Member, TAC, TACAgree, Certify
-from .serializers import UserSerializer, UserPasswordSerializer, MemberSerializer, CheckUserIdSerializer, CertifyPhoneSerializer, CertifyAllSerializer
+from .serializers import UserSerializer, UserPasswordSerializer, MemberSerializer, CheckMemberNameSerializer, CheckUserIdSerializer, CertifyPhoneSerializer, CertifyAllSerializer
 from sms import message
 
 
@@ -91,6 +91,18 @@ class UserCreateView(APIView):
         except:
             User.objects.filter(username=username).delete()
             return Response({"code": 400, "message": "회원가입 실패", "error": "e"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CheckMemberName(APIView):
+    # 중복 아이디 확인
+    def get(self, request, name):
+        query_dict = QueryDict('name='+name)
+        serializer = CheckMemberNameSerializer(data=query_dict)
+
+        if serializer.is_valid():
+            return Response({"code": 200, "message": "사용가능한 닉네임 입니다"}, status=status.HTTP_200_OK)
+        else:
+            return Response({"code": 400, "message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 # 계정 조회/수정 API
