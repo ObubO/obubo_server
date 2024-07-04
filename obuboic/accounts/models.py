@@ -6,16 +6,13 @@ from django.contrib.auth.models import PermissionsMixin
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.utils.translation import gettext_lazy as _
+from .validators import validate_id, validate_password, validate_name, validate_phone
+
 
 GENDER = {
         ("M", "MAN"),
         ("W", "WOMAN"),
     }
-
-USERTYPE = {
-    ('Self', '본인'),
-    ('Guard', '보호자'),
-}
 
 CONSENT = {
     ('True', '동의'),
@@ -59,8 +56,8 @@ class UserManger(BaseUserManager):
 class User(AbstractBaseUser, PermissionsMixin):
 
     username_validator = UnicodeUsernameValidator()
-    username = models.CharField(_("username"), max_length=20, validators=[username_validator], unique=True)
-    password = models.CharField(_("password"), max_length=255)
+    username = models.CharField(_("username"), max_length=20, unique=True, validators=[validate_id])
+    password = models.CharField(_("password"), max_length=255, validators=[validate_password])
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateField(auto_now=True)
     refresh_token = models.CharField(_("refresh_token"), max_length=255, null=True, blank=True)
@@ -85,7 +82,8 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 
 class UserType(models.Model):
-    type_name = models.CharField(_("user_type"), max_length=10, choices=USERTYPE)
+    type_name = models.CharField(_("type_name"), max_length=10)
+
     objects = models.Manager()
 
     def __str__(self):
@@ -97,10 +95,10 @@ class Member(models.Model):
         User,
         on_delete=models.CASCADE,
     )
-    name = models.CharField(_("name"), max_length=20, unique=True)
+    name = models.CharField(_("name"), max_length=20, unique=True, validators=[validate_name])
     gender = models.CharField(_("gender"), max_length=1, choices=GENDER)
     birth = models.DateField(_("birth"))
-    phone = models.CharField(_("phone"), max_length=11, blank=True, unique=True)
+    phone = models.CharField(_("phone"), max_length=11, blank=True, unique=True, validators=[validate_phone])
     email = models.EmailField(_("email"), max_length=50, null=True, blank=True, unique=True)
     user_type = models.ForeignKey(
         UserType,
@@ -154,8 +152,8 @@ class TACAgree(models.Model):
         return self.user.username
 
 
-class Certify(models.Model):
-    phone = models.CharField(_("phone"), max_length=11)
+class AuthTable(models.Model):
+    phone = models.CharField(_("phone"), max_length=11, validators=[validate_phone])
     code = models.CharField(_("code"), max_length=6)
     created_at = models.DateTimeField(auto_now_add=True)
 

@@ -12,8 +12,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 from rest_framework_simplejwt.views import TokenRefreshView
-from .models import User, Member, TAC, TACAgree, Certify
-from .serializers import UserSerializer, UserPasswordSerializer, MemberSerializer, CheckMemberNameSerializer, CheckUserIdSerializer, CertifyPhoneSerializer, CertifyAllSerializer
+from .models import User, Member, TAC, TACAgree, AuthTable
+from .serializers import UserSerializer, UserPasswordSerializer, MemberSerializer, CheckMemberNameSerializer, CheckUserIdSerializer, AuthTablePhoneSerializer, AuthTableSerializer
 from sms import message
 
 
@@ -228,14 +228,14 @@ class CustomTokenRefreshView(TokenRefreshView):
 class AuthRequest(APIView):
     def post(self, request):
         # 데이터 유효성 검사
-        cert_serializer = CertifyPhoneSerializer(data=request.data)
+        serializer = AuthTablePhoneSerializer(data=request.data)
 
         # 인증 정보 저장
-        if cert_serializer.is_valid():
-            phone = cert_serializer.validated_data["phone"]
+        if serializer.is_valid():
+            phone = serializer.validated_data["phone"]
             code = str(random.randint(100000, 999999))
 
-            Certify.objects.create(phone=phone, code=code)
+            AuthTable.objects.create(phone=phone, code=code)
 
             # 인증 코드 전송
             # res_code = message.send_sms(SMS_API_KEY, SMS_API_SECRET, phone, code)
@@ -271,7 +271,7 @@ class AuthUserRequest(APIView):
         if phone == db_phone:
             # 인증코드 발급
             code = str(random.randint(100000, 999999))
-            Certify.objects.create(phone=phone, code=code)
+            AuthTable.objects.create(phone=phone, code=code)
 
             # 인증코드 전송
             # res_code = message.send_sms(SMS_API_KEY, SMS_API_SECRET, phone, code)
@@ -291,8 +291,8 @@ class AuthVerify(APIView):
         current_time = datetime.now()
 
         # 인증 데이터 조회
-        cert = Certify.objects.filter(phone=phone).order_by('-created_at').first()
-        serializer = CertifyAllSerializer(instance=cert)
+        cert = AuthTable.objects.filter(phone=phone).order_by('-created_at').first()
+        serializer = AuthTableSerializer(instance=cert)
         db_code = serializer.data['code']
         db_time = datetime.strptime(serializer.data['created_at'], "%Y-%m-%dT%H:%M:%S.%f")
 
