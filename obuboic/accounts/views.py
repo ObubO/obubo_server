@@ -15,7 +15,7 @@ from rest_framework_simplejwt.views import TokenRefreshView
 from .models import User, Member, TAC, TACAgree, AuthTable
 from .serializers import UserSerializer, UserPasswordSerializer, MemberSerializer, CheckMemberNameSerializer, CheckUserIdSerializer, AuthTablePhoneSerializer, AuthTableSerializer
 from sms import message
-
+from common import response
 
 SECRET_KEY = getattr(settings, 'SECRET_KEY', 'SECRET_KEY')
 SMS_API_KEY = getattr(settings, "SMS_API_KEY")
@@ -36,9 +36,9 @@ class UserCreateView(APIView):
         serializer = CheckUserIdSerializer(data=query_dict)
 
         if serializer.is_valid():
-            return Response({"code": 200, "message": "사용가능한 ID 입니다"}, status=status.HTTP_200_OK)
+            return response.HTTP_200
         else:
-            return Response({"code": 400, "message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            return response.http_400(serializer.errors)
 
     # 회원가입
     def post(self, request):
@@ -57,7 +57,7 @@ class UserCreateView(APIView):
             user = get_object_or_404(User, username=username)
 
         else:
-            return Response({"code": 400, "message": "회원가입 실패", "error": user_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            return response.http_400(user_serializer.errors)
 
         # 회원정보(Member) 인스턴스 선언
         if member_serializer.is_valid():
@@ -71,7 +71,8 @@ class UserCreateView(APIView):
             )
 
         else:
-            return Response({"code": 400, "message": "회원가입 실패", "error": member_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            User.objects.filter(username=username).delete()
+            return response.http_400(member_serializer.errors)
 
         # 약관동의 인스턴스 생성
         try:
@@ -86,11 +87,11 @@ class UserCreateView(APIView):
                 )
             member.save()
 
-            return Response({"code": 201, "message": "회원가입 완료"}, status=status.HTTP_201_CREATED)
+            return response.HTTP_201
 
         except:
             User.objects.filter(username=username).delete()
-            return Response({"code": 400, "message": "회원가입 실패", "error": "e"}, status=status.HTTP_400_BAD_REQUEST)
+            return response.http_400("약관동의는 필수항목입니다")
 
 
 class CheckMemberName(APIView):
@@ -100,9 +101,9 @@ class CheckMemberName(APIView):
         serializer = CheckMemberNameSerializer(data=query_dict)
 
         if serializer.is_valid():
-            return Response({"code": 200, "message": "사용가능한 닉네임 입니다"}, status=status.HTTP_200_OK)
+            return response.HTTP_200
         else:
-            return Response({"code": 400, "message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            return response.http_400(serializer.errors)
 
 
 # 계정 조회/수정 API
@@ -120,15 +121,17 @@ class AuthView(APIView):
             member = get_object_or_404(Member, user=user)
             serializer = MemberSerializer(instance=member)
 
-            return Response({"code": 200, "message": "사용자 조회 성공", "result": {"user": serializer.data}}, status=status.HTTP_200_OK)
+            result = {"user": serializer.data}
 
-        # Access_Token 기간 만료
+            return response.http_200(result)
+
+            # Access_Token 기간 만료
         except jwt.exceptions.ExpiredSignatureError:
-            return Response({"code": 401, "message": "토큰의 유효기간이 만료되었습니다"}, status=status.HTTP_401_UNAUTHORIZED)
+            return response.http_401("토큰의 기간이 만료되었습니다.")
 
-        # 사용 불가능 토큰
+            # 사용 불가능 토큰
         except jwt.exceptions.InvalidTokenError:
-            return Response({"code": 400, "message": "유효하지 않은 토큰입니다"}, status=status.HTTP_400_BAD_REQUEST)
+            return response.http_400("사용할 수 없는 토큰입니다.")
 
 
 # 계정 로그인 API
@@ -138,10 +141,7 @@ class LoginView(APIView):
         try:
             # ID/PW 인증
             user = authenticate(username=request.data.get("username"), password=request.data.get("password"))
-        except():
-            return Response({"code": 400, "message": "로그인 정보가 올바르지 않습니다"}, status=status.HTTP_400_BAD_REQUEST)
 
-        else:
             # 인증 통과시(회원이 존재하는 경우)
             if user is not None:
                 # JWT 토큰 발급
@@ -154,10 +154,13 @@ class LoginView(APIView):
                 user.last_login = datetime.now()
                 user.save()
 
-                return Response({"code": 200, "message": "로그인 성공", "result": {"token": {"access": access_token, "refresh": refresh_token}}}, status=status.HTTP_200_OK)
-
+                result = {"token": {"access": access_token, "refresh": refresh_token}}
+                return response.http_200(result)
             else:
-                return Response({"code": 400, "message": "로그인 정보가 올바르지 않습니다"}, status=status.HTTP_400_BAD_REQUEST)
+                return response.http_400("회원정보가 올바르지 않습니다.")
+
+        except:
+            return response.http_400("회원정보를 확인해주세요.")
 
 
 # 계정 로그아웃 API
@@ -177,10 +180,10 @@ class LogoutView(APIView):
             user.refresh_token = None
             user.save()
 
-            return Response({"code": 200, "message": "로그아웃 성공"}, status=status.HTTP_200_OK)
+            return response.HTTP_200
 
         except jwt.exceptions.InvalidTokenError:
-            return Response({"code": 400, "message": "유효하지 않은 토큰입니다"}, status=status.HTTP_400_BAD_REQUEST)
+            return response.http_400("유효하지 않은 토큰입니다.")
 
 
 # AccessToken 재발급 API
@@ -206,22 +209,22 @@ class CustomTokenRefreshView(TokenRefreshView):
 
                 if token_serializer.is_valid():
                     access_token = token_serializer.validated_data
-
-                    return Response({"code": 200, "message": "Access Token 발급 성공", "result": {"token": {"access": access_token}}}, status=status.HTTP_200_OK)
-
-                return Response({"code": 503, "message": "토큰 발급 에러 발생. 서버확인 필요"}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+                    result = {"token": access_token}
+                    return response.http_200(result)
+                else:
+                    return response.http_503("서버 에러 발생")
 
             # 공격시도 감지
             else:
-                return Response({"code": 403, "message": "사용자가 삭제한 토큰입니다"}, status=status.HTTP_403_FORBIDDEN)
+                return response.http_403("사용자가 삭제한 토큰입니다.")
 
         # 기간 만료된 토큰
         except jwt.exceptions.ExpiredSignatureError:
-            return Response({"code": 401, "message": "기간이 만료된 토큰입니다"}, status=status.HTTP_401_UNAUTHORIZED)
+            return response.http_401("토큰의 기간이 만료되었습니다.")
 
         # 사용 불가능 토큰
         except jwt.exceptions.InvalidTokenError:
-            return Response({"code": 400, "message": "사용할 수 없는 토큰입니다"}, status=status.HTTP_400_BAD_REQUEST)
+            return response.http_400("사용할 수 없는 토큰입니다.")
 
 
 # -- 전화번호 인증코드 요청 -- #
@@ -241,11 +244,11 @@ class AuthRequest(APIView):
             # res_code = message.send_sms(SMS_API_KEY, SMS_API_SECRET, phone, code)
             res_code = 200
             if res_code == 200:
-                return Response({"code": 200, "message": "인증문자 전송 성공"}, status=status.HTTP_200_OK)
+                return response.HTTP_200
             else:
-                return Response({"code": 503, "message": "인증문자 전송 실패"}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+                return response.http_503("인증문자 전송 실패")
         else:
-            return Response({"code": 400, "message": "전화번호 유효성 검사 실패"}, status=status.HTTP_400_BAD_REQUEST)
+            return response.http_400("전화번호를 확인해주세요.")
 
 
 # -- 회원 인증코드 요청 -- #
@@ -276,9 +279,12 @@ class AuthUserRequest(APIView):
             # 인증코드 전송
             # res_code = message.send_sms(SMS_API_KEY, SMS_API_SECRET, phone, code)
             res_code = 200
-            return Response({"code": 200, "message": "인증문자 전송 성공"}, status=status.HTTP_200_OK)
+            if res_code == 200:
+                return response.HTTP_200
+            else:
+                return response.http_503("인증문자 전송 실패.")
         else:
-            return Response({"code": 401, "message": "DB에 저장된 전화번호와 입력한 전화번호 불일치"}, status=status.HTTP_401_UNAUTHORIZED)
+            return response.http_401("회원가입 시 기입한 비밀번호를 입력해주세요.")
 
 
 # -- 인증코드 확인 -- #
@@ -291,8 +297,12 @@ class AuthVerify(APIView):
         current_time = datetime.now()
 
         # 인증 데이터 조회
-        cert = AuthTable.objects.filter(phone=phone).order_by('-created_at').first()
-        serializer = AuthTableSerializer(instance=cert)
+        auth_instance = AuthTable.objects.filter(phone=phone).order_by('-created_at').first()
+
+        if auth_instance is None:
+            return response.http_404("전화번호가 존재하지 않습니다.")
+
+        serializer = AuthTableSerializer(instance=auth_instance)
         db_code = serializer.data['code']
         db_time = datetime.strptime(serializer.data['created_at'], "%Y-%m-%dT%H:%M:%S.%f")
 
@@ -300,11 +310,11 @@ class AuthVerify(APIView):
         time_difference = current_time - db_time
         if code == db_code:
             if time_difference <= timedelta(minutes=3):
-                return Response({"code": 200, "message": "인증 성공"}, status=status.HTTP_200_OK)
+                return response.HTTP_200
             else:
-                return Response({"code": 401, "message": "인증번호 시간 초과"}, status=status.HTTP_401_UNAUTHORIZED)
+                return response.http_401("인증번호 유효기간이 만료되었습니다.")
         else:
-            return Response({"code": 400, "message": "인증번호 불일치"}, status=status.HTTP_400_BAD_REQUEST)
+            return response.http_400("인증번호를 확인해주세요.")
 
 
 # -- 비밀번호 변경 -- #
@@ -320,6 +330,6 @@ class ChangePassword(APIView):
             user.set_password(password)
             user.save()
 
-            return Response({"code": 200, "message": "비밀번호 변경 성공"}, status=status.HTTP_200_OK)
+            return response.HTTP_200
         else:
-            return Response({"code": 400, "message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            return response.http_400("비밀번호를 확인해주세요.")
