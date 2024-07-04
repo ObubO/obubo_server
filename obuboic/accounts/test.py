@@ -7,13 +7,16 @@ from django.contrib.auth import authenticate
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
+from rest_framework import status
+from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 from rest_framework_simplejwt.views import TokenRefreshView
-from .models import User, Member, TAC, TACAgree, AuthTable
-from .serializers import UserSerializer, UserPasswordSerializer, MemberSerializer, CheckMemberNameSerializer, CheckUserIdSerializer, AuthTablePhoneSerializer, AuthTableSerializer
+from .models import User, Member, TAC, TACAgree, Certify
+from .serializers import UserSerializer, UserPasswordSerializer, MemberSerializer, CheckMemberNameSerializer, CheckUserIdSerializer, CertifyPhoneSerializer, CertifyAllSerializer
 from sms import message
 from common import response
+
 
 SECRET_KEY = getattr(settings, 'SECRET_KEY', 'SECRET_KEY')
 SMS_API_KEY = getattr(settings, "SMS_API_KEY")
@@ -123,11 +126,11 @@ class AuthView(APIView):
 
             return response.http_200(result)
 
-            # Access_Token 기간 만료
+        # Access_Token 기간 만료
         except jwt.exceptions.ExpiredSignatureError:
             return response.http_401("토큰의 기간이 만료되었습니다.")
 
-            # 사용 불가능 토큰
+        # 사용 불가능 토큰
         except jwt.exceptions.InvalidTokenError:
             return response.http_400("사용할 수 없는 토큰입니다.")
 
@@ -165,10 +168,10 @@ class LoginView(APIView):
 @method_decorator(csrf_exempt, name='dispatch')
 class LogoutView(APIView):
     def post(self, request):
-        refresh = request.headers.get('Authorization', None)
+        access = request.headers.get('Authorization', None)
         try:
             # JWT 인증(Refesh Token) - 기간만료 무시
-            payload = jwt.decode(refresh, SECRET_KEY, algorithms=['HS256'], options={"verify_exp": False})
+            payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'], options={"verify_exp": False})
 
             # 사용자 조회
             pk = payload.get('user_id')
@@ -211,15 +214,12 @@ class CustomTokenRefreshView(TokenRefreshView):
                     return response.http_200(result)
                 else:
                     return response.http_503("서버 에러 발생")
-
             # 공격시도 감지
             else:
                 return response.http_403("사용자가 삭제한 토큰입니다.")
-
         # 기간 만료된 토큰
         except jwt.exceptions.ExpiredSignatureError:
             return response.http_401("토큰의 기간이 만료되었습니다.")
-
         # 사용 불가능 토큰
         except jwt.exceptions.InvalidTokenError:
             return response.http_400("사용할 수 없는 토큰입니다.")
@@ -229,14 +229,14 @@ class CustomTokenRefreshView(TokenRefreshView):
 class AuthRequest(APIView):
     def post(self, request):
         # 데이터 유효성 검사
-        serializer = AuthTablePhoneSerializer(data=request.data)
+        serializer = CertifyPhoneSerializer(data=request.data)
 
         # 인증 정보 저장
         if serializer.is_valid():
             phone = serializer.validated_data["phone"]
             code = str(random.randint(100000, 999999))
 
-            AuthTable.objects.create(phone=phone, code=code)
+            Certify.objects.create(phone=phone, code=code)
 
             # 인증 코드 전송
             # res_code = message.send_sms(SMS_API_KEY, SMS_API_SECRET, phone, code)
@@ -272,7 +272,7 @@ class AuthUserRequest(APIView):
         if phone == db_phone:
             # 인증코드 발급
             code = str(random.randint(100000, 999999))
-            AuthTable.objects.create(phone=phone, code=code)
+            Certify.objects.create(phone=phone, code=code)
 
             # 인증코드 전송
             # res_code = message.send_sms(SMS_API_KEY, SMS_API_SECRET, phone, code)
@@ -295,12 +295,13 @@ class AuthVerify(APIView):
         current_time = datetime.now()
 
         # 인증 데이터 조회
-        auth_instance = AuthTable.objects.filter(phone=phone).order_by('-created_at').first()
 
-        if auth_instance is None:
+        cert = Certify.objects.filter(phone=phone).order_by('-created_at').first()
+
+        if cert is None:
             return response.http_404("전화번호가 존재하지 않습니다.")
 
-        serializer = AuthTableSerializer(instance=auth_instance)
+        serializer = CertifyAllSerializer(instance=cert)
         db_code = serializer.data['code']
         db_time = datetime.strptime(serializer.data['created_at'], "%Y-%m-%dT%H:%M:%S.%f")
 
@@ -331,3 +332,4 @@ class ChangePassword(APIView):
             return response.HTTP_200
         else:
             return response.http_400("비밀번호를 확인해주세요.")
+
