@@ -10,7 +10,7 @@ from django.utils.decorators import method_decorator
 from rest_framework.views import APIView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 from rest_framework_simplejwt.views import TokenRefreshView
-from .models import User, Member, TAC, TACAgree, AuthTable
+from .models import User, UserType, Member, TAC, TACAgree, AuthTable
 from .serializers import UserSerializer, UserPasswordSerializer, MemberSerializer, CheckMemberNameSerializer, CheckUserIdSerializer, AuthTablePhoneSerializer, AuthTableSerializer
 from sms import message
 from common import response
@@ -18,6 +18,8 @@ from common import response
 SECRET_KEY = getattr(settings, 'SECRET_KEY', 'SECRET_KEY')
 SMS_API_KEY = getattr(settings, "SMS_API_KEY")
 SMS_API_SECRET = getattr(settings, "SMS_API_SECRET")
+
+TACS = [[1, 'tac1'], [2, 'tac2'], [3, 'tac3'], [4, 'tac4']]
 
 
 def home(request):
@@ -66,6 +68,7 @@ class UserCreateView(APIView):
                 birth=member_serializer.validated_data["birth"],
                 phone=member_serializer.validated_data["phone"],
                 email=member_serializer.validated_data["email"],
+                user_type=get_object_or_404(UserType, id=request.data.get("typeNo")),
             )
 
         else:
@@ -74,13 +77,12 @@ class UserCreateView(APIView):
 
         # 약관동의 인스턴스 생성
         try:
-            tacs = [[1, 'tac1'], [2, 'tac2'], [3, 'tac3'], [4, 'tac4']]
-            for tac in tacs:
-                code, consent = tac[0], tac[1]
+            for tac in TACS:
+                tac_no, is_consent = tac[0], tac[1]
                 TACAgree.objects.create(
                     user=user,
-                    tac=get_object_or_404(TAC, id=code),
-                    is_consent=request.data[consent],
+                    tac=get_object_or_404(TAC, id=tac_no),
+                    is_consent=request.data[is_consent],
                     consent_date=datetime.now(),
                 )
             member.save()
