@@ -141,9 +141,9 @@ class LoginView(APIView):
         try:
             # ID/PW 인증
             user = authenticate(username=request.data.get("username"), password=request.data.get("password"))
-
+            is_active = user.is_active
             # 인증 통과시(회원이 존재하는 경우)
-            if user is not None:
+            if user is not None and is_active:
                 # JWT 토큰 발급
                 token = TokenObtainPairSerializer.get_token(user)
                 refresh_token = str(token)
@@ -184,6 +184,33 @@ class LogoutView(APIView):
 
         except jwt.exceptions.InvalidTokenError:
             return response.http_400("유효하지 않은 토큰입니다.")
+
+
+# 회원 탈퇴 API
+class WithdrawalView(APIView):
+    def post(self, request):
+        try:
+            access = request.headers.get('Authorization', None)
+
+            # JWT 인증(Access Token)
+            payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'])
+
+            # 사용자 조회
+            pk = payload.get('user_id')
+            user = get_object_or_404(User, pk=pk)
+
+            user.is_active = False
+            user.save()
+
+            return response.HTTP_200
+
+            # Access_Token 기간 만료
+        except jwt.exceptions.ExpiredSignatureError:
+            return response.http_401("토큰의 기간이 만료되었습니다.")
+
+            # 사용 불가능 토큰
+        except jwt.exceptions.InvalidTokenError:
+            return response.http_400("사용할 수 없는 토큰입니다.")
 
 
 # AccessToken 재발급 API
