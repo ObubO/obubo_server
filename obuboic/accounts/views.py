@@ -154,6 +154,36 @@ class AuthView(APIView):
         except jwt.exceptions.InvalidTokenError:
             return response.http_400("사용할 수 없는 토큰입니다.")
 
+    def patch(self, request):
+        try:
+            access = request.headers.get('Authorization', None)
+
+            # JWT 인증(Access Token)
+            payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'])
+
+            # 사용자 조회
+            pk = payload.get('user_id')
+            user = get_object_or_404(User, pk=pk)
+            member = get_object_or_404(Member, user=user)
+
+            # 수정
+            data_dict = self.query_to_dict(request.data)
+
+            for key, value in data_dict.items():
+                setattr(member, key, value)
+
+            member.save()
+
+            return response.HTTP_200
+
+        # Access_Token 기간 만료
+        except jwt.exceptions.ExpiredSignatureError:
+            return response.http_401("토큰의 기간이 만료되었습니다.")
+
+        # 사용 불가능 토큰
+        except jwt.exceptions.InvalidTokenError:
+            return response.http_400("사용할 수 없는 토큰입니다.")
+
 
 # 계정 로그인 API
 @method_decorator(csrf_exempt, name='dispatch')
