@@ -18,6 +18,7 @@ urlpatterns = [
     path('auth/verify', views.AuthVerify.as_view()),
 
     path('users/profiles', views.AuthView.as_view()),
+    path('users/id', views.FindUserAllId.as_view()),
     path('users/check-pw', views.CheckPassword.as_view()),
     path('users/password', views.ChangePasswordView.as_view()),
     path('users/token/refresh', views.CustomTokenRefreshView.as_view()),

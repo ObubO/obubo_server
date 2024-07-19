@@ -438,3 +438,32 @@ class ChangePasswordView(APIView):
             return response.HTTP_200
         else:
             return response.http_400("비밀번호를 확인해주세요")
+
+
+# -- 아이디 찾기(부분) -- #
+class FindUserPartId(APIView):
+    def post(self, request):
+        name = request.data['name']
+        phone = request.data['phone']
+
+        member = get_object_or_404(Member, phone=phone)
+
+        if member.name == name:
+            username = member.user.username[0:3]
+            for i in range(len(username[3:])):
+                username = username + "*"
+
+            return response.http_200(username)
+        else:
+            return response.http_404("해당 회원이 존재하지 않습니다.")
+
+
+# -- 아이디 찾기(전체) -- #
+class FindUserAllId(APIView):
+    def post(self, request):
+        phone = request.data['phone']
+
+        member = get_object_or_404(Member, phone=phone)
+        username = member.user.username
+
+        return response.http_200(username)
