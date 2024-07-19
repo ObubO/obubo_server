@@ -370,3 +370,71 @@ class AuthVerify(APIView):
         else:
             return response.http_400("인증번호를 확인해주세요.")
 
+
+# -- 비밀번호 확인 -- #
+class CheckPassword(APIView):
+    def post(self, request):
+        try:
+            access = request.headers.get('Authorization', None)
+            password = request.data['password']
+
+            # JWT 인증(Access Token)
+            payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'])
+
+            # 사용자 조회
+            pk = payload.get('user_id')
+            user = get_object_or_404(User, pk=pk)
+
+            if user.check_password(password):
+                return response.HTTP_200
+            else:
+                return response.http_404("비밀번호가 일치하지 않습니다.")
+
+        # Access_Token 기간 만료
+        except jwt.exceptions.ExpiredSignatureError:
+            return response.http_401("토큰의 기간이 만료되었습니다.")
+
+        # 사용 불가능 토큰
+        except jwt.exceptions.InvalidTokenError:
+            return response.http_400("사용할 수 없는 토큰입니다.")
+
+
+# -- 비밀번호 변경 -- #
+class ChangePasswordView(APIView):
+    def post(self, request):
+        serializer = UserPasswordSerializer(data=request.data)
+
+        if serializer.is_valid():
+            try:
+                username = request.data['username']
+            # 유저 조회
+            except:
+                try:
+                    access = request.headers.get('Authorization', None)
+
+                    # JWT 인증(Access Token)
+                    payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'])
+
+                    # 사용자 조회
+                    pk = payload.get('user_id')
+                    user = get_object_or_404(User, pk=pk)
+
+                    # Access_Token 기간 만료
+                except jwt.exceptions.ExpiredSignatureError:
+                    return response.http_401("토큰의 기간이 만료되었습니다.")
+
+                    # 사용 불가능 토큰
+                except jwt.exceptions.InvalidTokenError:
+                    return response.http_400("사용할 수 없는 토큰입니다.")
+
+            else:
+                user = get_object_or_404(User, username=username)
+
+            password = serializer.validated_data['password']
+
+            user.set_password(password)
+            user.save()
+
+            return response.HTTP_200
+        else:
+            return response.http_400("비밀번호를 확인해주세요")
