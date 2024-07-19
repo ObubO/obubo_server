@@ -11,7 +11,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 from rest_framework_simplejwt.views import TokenRefreshView
 from .models import User, UserType, Member, TAC, TACAgree, AuthTable
-from .serializers import UserSerializer, UserPasswordSerializer, MemberSerializer, CheckMemberNameSerializer, CheckUserIdSerializer, AuthTablePhoneSerializer, AuthTableSerializer
+from .serializers import UserSerializer, UserPasswordSerializer, MemberSerializer, CreateMemberSerializer, CheckNicknameSerializer, CheckUserIdSerializer, AuthTablePhoneSerializer, AuthTableSerializer
 from sms import message
 from common import response
 
@@ -26,8 +26,19 @@ def home(request):
     return render(request, 'index.html')
 
 
-# -- 회원가입 -- #
+def auth_request(phone):
+    # 인증코드 생성 및 저장
+    code = str(random.randint(100000, 999999))
 
+    AuthTable.objects.create(phone=phone, code=code)
+
+    # 인증 코드 전송
+    # res_code = message.send_sms(SMS_API_KEY, SMS_API_SECRET, phone, code)
+    print(code)
+    res_code = 200
+    return res_code
+
+# -- 회원가입 -- #
 @method_decorator(csrf_exempt, name='dispatch')
 class UserCreateView(APIView):
     # 중복 아이디 확인
@@ -42,7 +53,7 @@ class UserCreateView(APIView):
 
     # 회원가입
     def post(self, request):
-        member_serializer = MemberSerializer(data=request.data)
+        member_serializer = CreateMemberSerializer(data=request.data)
         user_serializer = UserSerializer(data=request.data)
 
         # 회원관리(User) 인스턴스 생성
@@ -64,6 +75,7 @@ class UserCreateView(APIView):
             member = Member(
                 user=user,
                 name=member_serializer.validated_data["name"],
+                nickname=member_serializer.validated_data["nickname"],
                 gender=member_serializer.validated_data["gender"],
                 birth=member_serializer.validated_data["birth"],
                 phone=member_serializer.validated_data["phone"],
@@ -94,11 +106,11 @@ class UserCreateView(APIView):
             return response.http_400("약관동의는 필수항목입니다")
 
 
-class CheckMemberName(APIView):
-    # 중복 아이디 확인
-    def get(self, request, name):
-        query_dict = QueryDict('name='+name)
-        serializer = CheckMemberNameSerializer(data=query_dict)
+# 닉네임 중복 확인
+class CheckNickname(APIView):
+    def get(self, request, nickname):
+        query_dict = QueryDict('nickname='+nickname)
+        serializer = CheckNicknameSerializer(data=query_dict)
 
         if serializer.is_valid():
             return response.HTTP_200
@@ -108,6 +120,15 @@ class CheckMemberName(APIView):
 
 # 계정 조회/수정 API
 class AuthView(APIView):
+    def query_to_dict(self, query_dict):
+        data_dict = {}
+
+        for key in query_dict.keys():
+            values = query_dict.getlist(key)
+            data_dict[key] = values[0]
+
+        return data_dict
+
     def get(self, request):
         try:
             access = request.headers.get('Authorization', None)
@@ -254,22 +275,17 @@ class CustomTokenRefreshView(TokenRefreshView):
             return response.http_400("사용할 수 없는 토큰입니다.")
 
 
-# -- 전화번호 인증코드 요청 -- #
-class AuthRequest(APIView):
+# -- 전화번호 인증  -- #
+class AuthPhone(APIView):
     def post(self, request):
         # 데이터 유효성 검사
         serializer = AuthTablePhoneSerializer(data=request.data)
 
-        # 인증 정보 저장
         if serializer.is_valid():
             phone = serializer.validated_data["phone"]
-            code = str(random.randint(100000, 999999))
 
-            AuthTable.objects.create(phone=phone, code=code)
+            res_code = auth_request(phone)
 
-            # 인증 코드 전송
-            # res_code = message.send_sms(SMS_API_KEY, SMS_API_SECRET, phone, code)
-            res_code = 200
             if res_code == 200:
                 return response.HTTP_200
             else:
@@ -278,8 +294,8 @@ class AuthRequest(APIView):
             return response.http_400("전화번호를 확인해주세요.")
 
 
-# -- 회원 인증코드 요청 -- #
-class AuthUserRequest(APIView):
+# -- 회원 아이디 인증 -- #
+class AuthUserWithId(APIView):
     def get(self, request, username):
         user_exist = User.objects.filter(username=username).exists()
 
@@ -292,26 +308,37 @@ class AuthUserRequest(APIView):
         username = request.data['username']
         phone = request.data['phone']
 
-        # 회원 조회
-        user = get_object_or_404(User, username=username)
-        member = get_object_or_404(Member, user=user)
-        db_serializer = MemberSerializer(instance=member)
-        db_phone = db_serializer.data['phone']
+        member = get_object_or_404(Member, phone=phone)
+        db_username = member.user.username
 
-        if phone == db_phone:
-            # 인증코드 발급
-            code = str(random.randint(100000, 999999))
-            AuthTable.objects.create(phone=phone, code=code)
+        if username == db_username:
+            res_code = auth_request(phone)
 
-            # 인증코드 전송
-            # res_code = message.send_sms(SMS_API_KEY, SMS_API_SECRET, phone, code)
-            res_code = 200
             if res_code == 200:
                 return response.HTTP_200
             else:
-                return response.http_503("인증문자 전송 실패.")
+                return response.http_503("인증문자 전송 실패")
         else:
-            return response.http_401("회원가입 시 기입한 비밀번호를 입력해주세요.")
+            return response.http_401("회원가입 시 기입한 아이디를 입력해주세요.")
+
+
+# -- 회원 이름 인증 -- #
+class AuthUserWithName(APIView):
+    def post(self, request):
+        name = request.data['name']
+        phone = request.data['phone']
+
+        member = get_object_or_404(Member, phone=phone)
+
+        if name == member.name:
+            res_code = auth_request(phone)
+
+            if res_code == 200:
+                return response.HTTP_200
+            else:
+                return response.http_503("인증문자 전송 실패")
+        else:
+            return response.http_401("회원가입 시 기입한 이름을 입력해주세요.")
 
 
 # -- 인증코드 확인 -- #
@@ -336,27 +363,10 @@ class AuthVerify(APIView):
         # 인증번호 유효성 검사
         time_difference = current_time - db_time
         if code == db_code:
-            if time_difference <= timedelta(minutes=3):
+            if time_difference <= timedelta(minutes=5):
                 return response.HTTP_200
             else:
                 return response.http_401("인증번호 유효기간이 만료되었습니다.")
         else:
             return response.http_400("인증번호를 확인해주세요.")
 
-
-# -- 비밀번호 변경 -- #
-class ChangePassword(APIView):
-    def post(self, request):
-        serializer = UserPasswordSerializer(data=request.data)
-        username = request.data['username']
-
-        if serializer.is_valid():
-            password = serializer.validated_data['password']
-
-            user = get_object_or_404(User, username=username)
-            user.set_password(password)
-            user.save()
-
-            return response.HTTP_200
-        else:
-            return response.http_400("비밀번호를 확인해주세요.")

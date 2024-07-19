@@ -6,13 +6,12 @@ from django.contrib.auth.models import PermissionsMixin
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.utils.translation import gettext_lazy as _
-from .validators import validate_id, validate_password, validate_name, validate_phone
-
+from .validators import validate_id, validate_password, validate_name, validate_nickname, validate_phone
 
 GENDER = {
-        ("M", "MAN"),
-        ("W", "WOMAN"),
-    }
+    ("M", "MAN"),
+    ("W", "WOMAN"),
+}
 
 CONSENT = {
     ('True', '동의'),
@@ -21,7 +20,6 @@ CONSENT = {
 
 
 class UserManger(BaseUserManager):
-
     use_in_migration = True
 
     def _create_user(self, username, password, **extra_fields):
@@ -54,7 +52,6 @@ class UserManger(BaseUserManager):
 
 
 class User(AbstractBaseUser, PermissionsMixin):
-
     username_validator = UnicodeUsernameValidator()
     username = models.CharField(_("username"), max_length=20, unique=True, validators=[validate_id])
     password = models.CharField(_("password"), max_length=255, validators=[validate_password])
@@ -86,6 +83,9 @@ class UserType(models.Model):
 
     objects = models.Manager()
 
+    class Meta:
+        verbose_name = "회원 유형"
+
     def __str__(self):
         return self.type_name
 
@@ -95,10 +95,11 @@ class Member(models.Model):
         User,
         on_delete=models.CASCADE,
     )
-    name = models.CharField(_("name"), max_length=20, unique=True, validators=[validate_name])
+    name = models.CharField(_("name"), max_length=10, validators=[validate_name])
+    nickname = models.CharField(_("nickname"), max_length=20, unique=True, validators=[validate_nickname])
     gender = models.CharField(_("gender"), max_length=1, choices=GENDER)
     birth = models.DateField(_("birth"))
-    phone = models.CharField(_("phone"), max_length=11, blank=True, unique=True, validators=[validate_phone])
+    phone = models.CharField(_("phone"), max_length=11, unique=True, validators=[validate_phone])
     email = models.EmailField(_("email"), max_length=50, null=True, blank=True, unique=True)
     user_type = models.ForeignKey(
         UserType,
@@ -110,11 +111,10 @@ class Member(models.Model):
     objects = models.Manager()
 
     class Meta:
-        verbose_name = "회원정보"
+        verbose_name = "회원 정보"
 
     def __str__(self):
-        return self.\
-            name
+        return self.name
 
 
 class TAC(models.Model):

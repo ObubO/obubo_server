@@ -9,6 +9,7 @@ HTTP_204 = Response({"success": True}, status=status.HTTP_204_NO_CONTENT)
 
 HTTP_400 = Response({"success": False}, status=status.HTTP_400_BAD_REQUEST)
 HTTP_401 = Response({"success": False}, status=status.HTTP_401_UNAUTHORIZED)
+HTTP_404 = Response({"success": False}, status=status.HTTP_404_NOT_FOUND)
 
 HTTP_503 = Response({"success": False}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 

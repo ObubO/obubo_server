@@ -29,13 +29,19 @@ class CheckUserIdSerializer(serializers.ModelSerializer):
 class MemberSerializer(serializers.ModelSerializer):
     class Meta:
         model = Member
-        fields = ['name', 'gender', 'birth', 'phone', 'email', ]
+        fields = '__all__'
 
 
-class CheckMemberNameSerializer(serializers.ModelSerializer):
+class CreateMemberSerializer(serializers.ModelSerializer):
     class Meta:
         model = Member
-        fields = ['name', ]
+        fields = ['name', 'nickname', 'gender', 'birth', 'phone', 'email', ]
+
+
+class CheckNicknameSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Member
+        fields = ['nickname', ]
 
 
 class TACSerializer(serializers.ModelSerializer):

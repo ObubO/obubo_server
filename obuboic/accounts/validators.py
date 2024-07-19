@@ -19,6 +19,10 @@ def validate_password(value):
 
 
 def validate_name(value):
+    None
+
+
+def validate_nickname(value):
     if not re.match(r'^([a-zA-Z0-9ㄱ-ㅎ|ㅏ-ㅣ|가-힣]).{1,10}$', value):
         raise ValidationError(
             '닉네임은 2자 이상 10자 이하, 영어 또는 숫자 또는 한글로만 구성',

@@ -36,8 +36,8 @@ class UserAdmin(BaseUserAdmin):
 
 
 class MemberAdmin(admin.ModelAdmin):
-    fields = ['user', 'name', 'gender', 'phone', 'birth', 'email', 'user_type', ]
-    list_display = ('user', 'name', 'gender', )
+    fields = ['user', 'name', 'nickname', 'gender', 'phone', 'birth', 'email', 'user_type', ]
+    list_display = ('user', 'name', 'nickname', 'user_type', )
 
     search_fields = ('name',)
     ordering = ('name',)
@@ -53,6 +53,16 @@ class TACAdmin(admin.ModelAdmin):
     list_display = ('title', )
 
     readonly_fields = ['title', 'content', 'is_necessary', ]
+
+
+class TACAdmin(admin.ModelAdmin):
+    fields = ['title', 'content', 'is_necessary', ]
+    list_display = ('title', 'is_necessary', )
+
+    readonly_fields = []
+
+    search_fields = ('title',)
+    ordering = ('title',)
 
 
 class TACAgreeAdmin(admin.ModelAdmin):
