@@ -22,21 +22,16 @@ SMS_API_SECRET = getattr(settings, "SMS_API_SECRET")
 TACS = [[1, 'tac1'], [2, 'tac2'], [3, 'tac3'], [4, 'tac4']]
 
 
-def home(request):
-    return render(request, 'index.html')
-
-
 def auth_request(phone):
     # 인증코드 생성 및 저장
     code = str(random.randint(100000, 999999))
-
     AuthTable.objects.create(phone=phone, code=code)
 
     # 인증 코드 전송
-    # res_code = message.send_sms(SMS_API_KEY, SMS_API_SECRET, phone, code)
-    print(code)
-    res_code = 200
+    res_code = message.send_sms(SMS_API_KEY, SMS_API_SECRET, phone, code)
+
     return res_code
+
 
 # -- 회원가입 -- #
 @method_decorator(csrf_exempt, name='dispatch')
@@ -84,7 +79,7 @@ class UserCreateView(APIView):
             )
 
         else:
-            User.objects.filter(username=username).delete()
+            user.delete()
             return response.http_400(member_serializer.errors)
 
         # 약관동의 인스턴스 생성
@@ -102,7 +97,7 @@ class UserCreateView(APIView):
             return response.HTTP_201
 
         except:
-            User.objects.filter(username=username).delete()
+            user.delete()
             return response.http_400("약관동의는 필수항목입니다")
 
 
@@ -418,11 +413,11 @@ class CheckPassword(APIView):
             if user.check_password(password):
                 return response.HTTP_200
             else:
-                return response.http_404("비밀번호가 일치하지 않습니다.")
+                return response.http_401("비밀번호가 일치하지 않습니다.")
 
         # Access_Token 기간 만료
         except jwt.exceptions.ExpiredSignatureError:
-            return response.http_401("토큰의 기간이 만료되었습니다.")
+            return response.http_401("토큰의 유효기간이 만료되었습니다.")
 
         # 사용 불가능 토큰
         except jwt.exceptions.InvalidTokenError:
@@ -496,4 +491,10 @@ class FindUserAllId(APIView):
         member = get_object_or_404(Member, phone=phone)
         username = member.user.username
 
-        return response.http_200(username)
+        str_date = str(member.user.created_at)
+        date = datetime.fromisoformat(str_date)
+        formatted_date = date.strftime('%Y-%m-%d')
+
+        result = response.make_result2("id", username, "date", formatted_date)
+
+        return response.http_200(result)

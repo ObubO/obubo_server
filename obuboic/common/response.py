@@ -14,6 +14,13 @@ HTTP_404 = Response({"success": False}, status=status.HTTP_404_NOT_FOUND)
 HTTP_503 = Response({"success": False}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
 
+def make_result2(name_1, param_1, name_2, param_2):
+    return {
+        str(name_1): param_1,
+        str(name_2): param_2,
+    }
+
+
 def http_200(result):
     return Response(
         {

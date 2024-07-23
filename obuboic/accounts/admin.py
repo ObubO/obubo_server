@@ -27,8 +27,8 @@ class UserAdmin(BaseUserAdmin):
     form = UserChangeForm
     add_from = UserCreationForm
 
-    list_display = ('username',)
-    list_filter = ('is_admin',)
+    list_display = ('username', 'is_active')
+    list_filter = ('is_admin', 'is_active')
     search_fields = ('username',)
     ordering = ('username',)
 
@@ -37,22 +37,18 @@ class UserAdmin(BaseUserAdmin):
 
 class MemberAdmin(admin.ModelAdmin):
     fields = ['user', 'name', 'nickname', 'gender', 'phone', 'birth', 'email', 'user_type', ]
-    list_display = ('user', 'name', 'nickname', 'user_type', )
+    list_display = ('user', 'name', 'user_type', 'is_active')
 
-    search_fields = ('name',)
+    def is_active(self, obj):
+        return obj.user.is_active
+
+    search_fields = ('name', 'user_type')
     ordering = ('name',)
 
 
 class UserTypeAdmin(admin.ModelAdmin):
     fields = ['type_name', ]
     list_display = ('type_name', )
-
-
-class TACAdmin(admin.ModelAdmin):
-    fields = ['title', 'content', 'is_necessary', ]
-    list_display = ('title', )
-
-    readonly_fields = ['title', 'content', 'is_necessary', ]
 
 
 class TACAdmin(admin.ModelAdmin):
