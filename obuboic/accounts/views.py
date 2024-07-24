@@ -51,39 +51,41 @@ class UserCreateView(APIView):
         member_serializer = CreateMemberSerializer(data=request.data)
         user_serializer = UserSerializer(data=request.data)
 
-        # 회원관리(User) 인스턴스 생성
-        if user_serializer.is_valid():
-            username = user_serializer.validated_data["username"]   # 회원 구분 key
+        try:
+            # 회원관리(User) 인스턴스 생성
+            if user_serializer.is_valid():
+                username = user_serializer.validated_data["username"]   # 회원 구분 key
 
-            User.objects.create_user(
-                username=username,
-                password=user_serializer.validated_data["password"],
-            )
+                User.objects.create_user(
+                    username=username,
+                    password=user_serializer.validated_data["password"],
+                )
 
-            user = get_object_or_404(User, username=username)
+                user = get_object_or_404(User, username=username)
 
-        else:
-            return response.http_400(user_serializer.errors)
+        except:
+            return response.http_400("회원가입 실패")
 
         # 회원정보(Member) 인스턴스 선언
-        if member_serializer.is_valid():
-            member = Member(
-                user=user,
-                name=member_serializer.validated_data["name"],
-                nickname=member_serializer.validated_data["nickname"],
-                gender=member_serializer.validated_data["gender"],
-                birth=member_serializer.validated_data["birth"],
-                phone=member_serializer.validated_data["phone"],
-                email=member_serializer.validated_data["email"],
-                user_type=get_object_or_404(UserType, id=request.data.get("typeNo")),
-            )
-
-        else:
-            user.delete()
-            return response.http_400(member_serializer.errors)
-
-        # 약관동의 인스턴스 생성
         try:
+            if member_serializer.is_valid():
+                member = Member(
+                    user=user,
+                    name=member_serializer.validated_data["name"],
+                    nickname=member_serializer.validated_data["nickname"],
+                    gender=member_serializer.validated_data["gender"],
+                    birth=member_serializer.validated_data["birth"],
+                    phone=member_serializer.validated_data["phone"],
+                    email=member_serializer.validated_data["email"],
+                    user_type=get_object_or_404(UserType, id=request.data.get("typeNo")),
+                )
+
+        except:
+            user.delete()
+            return response.http_400("회원가입 실패")
+
+        try:
+            # 약관동의 인스턴스 생성
             for tac in TACS:
                 tac_no, is_consent = tac[0], tac[1]
                 TACAgree.objects.create(
@@ -162,7 +164,12 @@ class AuthView(APIView):
             member = get_object_or_404(Member, user=user)
 
             # 수정
-            data_dict = self.query_to_dict(request.data)
+            try:
+                # test(postman) 요청 시 데이터 변환
+                data_dict = self.query_to_dict(request.data)
+            except:
+                # 클라이언트 요청 시
+                data_dict = request.data
 
             for key, value in data_dict.items():
                 setattr(member, key, value)
@@ -413,7 +420,7 @@ class CheckPassword(APIView):
             if user.check_password(password):
                 return response.HTTP_200
             else:
-                return response.http_401("비밀번호가 일치하지 않습니다.")
+                return response.http_404("비밀번호가 일치하지 않습니다.")
 
         # Access_Token 기간 만료
         except jwt.exceptions.ExpiredSignatureError:
