@@ -420,7 +420,7 @@ class CheckPassword(APIView):
             if user.check_password(password):
                 return response.HTTP_200
             else:
-                return response.http_404("비밀번호가 일치하지 않습니다.")
+                return response.http_403("비밀번호가 일치하지 않습니다.")
 
         # Access_Token 기간 만료
         except jwt.exceptions.ExpiredSignatureError:
