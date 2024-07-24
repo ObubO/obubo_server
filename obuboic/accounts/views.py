@@ -69,6 +69,9 @@ class UserCreateView(APIView):
         # 회원정보(Member) 인스턴스 선언
         try:
             if member_serializer.is_valid():
+                email = member_serializer.validated_data["email"]
+                if email == "":
+                    email = None
                 member = Member(
                     user=user,
                     name=member_serializer.validated_data["name"],
@@ -76,7 +79,7 @@ class UserCreateView(APIView):
                     gender=member_serializer.validated_data["gender"],
                     birth=member_serializer.validated_data["birth"],
                     phone=member_serializer.validated_data["phone"],
-                    email=member_serializer.validated_data["email"],
+                    email=email,
                     user_type=get_object_or_404(UserType, id=request.data.get("typeNo")),
                 )
 
