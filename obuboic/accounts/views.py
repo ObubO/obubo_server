@@ -11,15 +11,13 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 from rest_framework_simplejwt.views import TokenRefreshView
 from .models import User, UserType, Member, TAC, TACAgree, AuthTable
-from .serializers import UserSerializer, UserPasswordSerializer, MemberSerializer, CreateMemberSerializer, CheckNicknameSerializer, CheckUserIdSerializer, AuthTablePhoneSerializer, AuthTableSerializer
+from .serializers import UserPasswordSerializer, MemberSerializer, CheckNicknameSerializer, CheckUserIdSerializer, AuthTablePhoneSerializer, AuthTableSerializer, SignUpSerializer
 from sms import message
 from common import response
 
 SECRET_KEY = getattr(settings, 'SECRET_KEY', 'SECRET_KEY')
 SMS_API_KEY = getattr(settings, "SMS_API_KEY")
 SMS_API_SECRET = getattr(settings, "SMS_API_SECRET")
-
-TACS = [[1, 'tac1'], [2, 'tac2'], [3, 'tac3'], [4, 'tac4']]
 
 
 def auth_request(phone):
@@ -48,62 +46,14 @@ class UserCreateView(APIView):
 
     # 회원가입
     def post(self, request):
-        member_serializer = CreateMemberSerializer(data=request.data)
-        user_serializer = UserSerializer(data=request.data)
+        serializer = SignUpSerializer(data=request.data)
 
-        try:
-            # 회원관리(User) 인스턴스 생성
-            if user_serializer.is_valid():
-                username = user_serializer.validated_data["username"]   # 회원 구분 key
+        if serializer.is_valid():
+            serializer.create(serializer.validated_data)
 
-                User.objects.create_user(
-                    username=username,
-                    password=user_serializer.validated_data["password"],
-                )
-
-                user = get_object_or_404(User, username=username)
-
-        except:
-            return response.http_400("회원가입 실패")
-
-        # 회원정보(Member) 인스턴스 선언
-        try:
-            if member_serializer.is_valid():
-                email = member_serializer.validated_data["email"]
-                if email == "":
-                    email = None
-                member = Member(
-                    user=user,
-                    name=member_serializer.validated_data["name"],
-                    nickname=member_serializer.validated_data["nickname"],
-                    gender=member_serializer.validated_data["gender"],
-                    birth=member_serializer.validated_data["birth"],
-                    phone=member_serializer.validated_data["phone"],
-                    email=email,
-                    user_type=get_object_or_404(UserType, id=request.data.get("typeNo")),
-                )
-
-        except:
-            user.delete()
-            return response.http_400("회원가입 실패")
-
-        try:
-            # 약관동의 인스턴스 생성
-            for tac in TACS:
-                tac_no, is_consent = tac[0], tac[1]
-                TACAgree.objects.create(
-                    user=user,
-                    tac=get_object_or_404(TAC, id=tac_no),
-                    is_consent=request.data[is_consent],
-                    consent_date=datetime.now(),
-                )
-            member.save()
-
-            return response.HTTP_201
-
-        except:
-            user.delete()
-            return response.http_400("약관동의는 필수항목입니다")
+            return response.HTTP_200
+        else:
+            return response.http_400(serializer.errors)
 
 
 # 닉네임 중복 확인
@@ -282,11 +232,10 @@ class CustomTokenRefreshView(TokenRefreshView):
             # 사용자 조회
             pk = payload.get('user_id')
             user = get_object_or_404(User, pk=pk)
-            serializer = UserSerializer(instance=user)
 
         # -- 탈취당한 Refresh Token 여부 -- #
             # 정상적 요청인 경우
-            if refresh_token == serializer.data.get('refresh_token'):
+            if refresh_token == user.refresh_token:
                 data = {'refresh': refresh_token}
                 token_serializer = TokenRefreshSerializer(data=data)
 

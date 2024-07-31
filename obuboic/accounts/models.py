@@ -36,6 +36,8 @@ class UserManger(BaseUserManager):
 
         user.save(using=self.db)
 
+        return user
+
     def create_user(self, username, password, **extra_fields):
 
         extra_fields.setdefault('is_admin', False)
@@ -100,7 +102,7 @@ class Member(models.Model):
     gender = models.CharField(_("gender"), max_length=1, choices=GENDER)
     birth = models.DateField(_("birth"))
     phone = models.CharField(_("phone"), max_length=11, unique=True, validators=[validate_phone])
-    email = models.EmailField(_("email"), max_length=50, null=True, blank=True, unique=True)
+    email = models.EmailField(_("email"), max_length=50, unique=True, null=True, blank=True)
     user_type = models.ForeignKey(
         UserType,
         on_delete=models.PROTECT,
