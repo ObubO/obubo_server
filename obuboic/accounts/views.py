@@ -31,6 +31,23 @@ def auth_request(phone):
     return res_code
 
 
+def jwt_decode_handler(token):
+    try:
+        # JWT 인증(Access Token)
+        payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
+        pk = payload.get('user_id')
+        user = get_object_or_404(User, pk=pk)
+
+        return True, user
+
+    # Token has expired
+    except jwt.exceptions.ExpiredSignatureError as e:
+        return False, response.http_401("Token has expired")
+    # Invalid token
+    except jwt.exceptions.InvalidTokenError as e:
+        return False, response.http_400("Invalid Token")
+
+
 # -- 회원가입 -- #
 @method_decorator(csrf_exempt, name='dispatch')
 class UserCreateView(APIView):
@@ -80,64 +97,44 @@ class AuthView(APIView):
         return data_dict
 
     def get(self, request):
-        try:
-            access = request.headers.get('Authorization', None)
+        access_token = request.headers.get('Authorization', None)
 
-            # JWT 인증(Access Token)
-            payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'])
+        token_data = jwt_decode_handler(access_token)
+        jwt_is_valid = token_data[0]
 
-            # 사용자 조회
-            pk = payload.get('user_id')
-            user = get_object_or_404(User, pk=pk)
+        if jwt_is_valid:
+            user = token_data[1]
             member = get_object_or_404(Member, user=user)
             serializer = MemberSerializer(instance=member)
-
             result = {"user": serializer.data}
 
             return response.http_200(result)
-
-            # Access_Token 기간 만료
-        except jwt.exceptions.ExpiredSignatureError:
-            return response.http_401("토큰의 기간이 만료되었습니다.")
-
-            # 사용 불가능 토큰
-        except jwt.exceptions.InvalidTokenError:
-            return response.http_400("사용할 수 없는 토큰입니다.")
+        else:
+            http_error_response = token_data[1]
+            return http_error_response
 
     def patch(self, request):
-        try:
-            access = request.headers.get('Authorization', None)
+        access_token = request.headers.get('Authorization', None)
 
-            # JWT 인증(Access Token)
-            payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'])
+        token_data = jwt_decode_handler(access_token)
+        jwt_is_valid = token_data[0]
 
-            # 사용자 조회
-            pk = payload.get('user_id')
-            user = get_object_or_404(User, pk=pk)
+        if jwt_is_valid:
+            user = token_data[1]
             member = get_object_or_404(Member, user=user)
-
-            # 수정
             try:
-                # test(postman) 요청 시 데이터 변환
-                data_dict = self.query_to_dict(request.data)
+                data_dict = self.query_to_dict(request.data)  # test(postman) 요청 시 데이터 변환
             except:
-                # 클라이언트 요청 시
-                data_dict = request.data
+                data_dict = request.data  # 클라이언트 요청 시
 
             for key, value in data_dict.items():
                 setattr(member, key, value)
 
             member.save()
-
             return response.HTTP_200
-
-        # Access_Token 기간 만료
-        except jwt.exceptions.ExpiredSignatureError:
-            return response.http_401("토큰의 기간이 만료되었습니다.")
-
-        # 사용 불가능 토큰
-        except jwt.exceptions.InvalidTokenError:
-            return response.http_400("사용할 수 없는 토큰입니다.")
+        else:
+            http_error_response = token_data[1]
+            return http_error_response
 
 
 # 계정 로그인 API
@@ -195,68 +192,51 @@ class LogoutView(APIView):
 # 회원 탈퇴 API
 class WithdrawalView(APIView):
     def post(self, request):
-        try:
-            access = request.headers.get('Authorization', None)
+        access_token = request.headers.get('Authorization', None)
 
-            # JWT 인증(Access Token)
-            payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'])
+        token_data = jwt_decode_handler(access_token)
+        jwt_is_valid = token_data[0]
 
-            # 사용자 조회
-            pk = payload.get('user_id')
-            user = get_object_or_404(User, pk=pk)
-
+        if jwt_is_valid:
+            user = token_data[1]
             user.is_active = False
             user.save()
 
             return response.HTTP_200
-
-            # Access_Token 기간 만료
-        except jwt.exceptions.ExpiredSignatureError:
-            return response.http_401("토큰의 기간이 만료되었습니다.")
-
-            # 사용 불가능 토큰
-        except jwt.exceptions.InvalidTokenError:
-            return response.http_400("사용할 수 없는 토큰입니다.")
+        else:
+            http_error_response = token_data[1]
+            return http_error_response
 
 
 # AccessToken 재발급 API
 @method_decorator(csrf_exempt, name='dispatch')
 class CustomTokenRefreshView(TokenRefreshView):
     def post(self, request):
-        try:
-            refresh_token = request.data.get('refresh')
+        refresh_token = request.data.get('refresh')
 
-            # JWT 인증(Refresh Token)
-            payload = jwt.decode(refresh_token, SECRET_KEY, algorithms=['HS256'])
+        jwt_decode_data = jwt_decode_handler(refresh_token)
+        jwt_is_valid, user = jwt_decode_data[0], jwt_decode_data[1]
 
-            # 사용자 조회
-            pk = payload.get('user_id')
-            user = get_object_or_404(User, pk=pk)
+        if not jwt_is_valid:
+            http_error_response = jwt_decode_data[1]
+            return http_error_response
 
         # -- 탈취당한 Refresh Token 여부 -- #
-            # 정상적 요청인 경우
-            if refresh_token == user.refresh_token:
-                data = {'refresh': refresh_token}
-                token_serializer = TokenRefreshSerializer(data=data)
+        # 정상적 요청인 경우
+        if refresh_token == user.refresh_token:
+            data = {'refresh': refresh_token}
+            token_serializer = TokenRefreshSerializer(data=data)
 
-                if token_serializer.is_valid():
-                    access_token = token_serializer.validated_data
-                    result = {"token": access_token}
-                    return response.http_200(result)
-                else:
-                    return response.http_503("서버 에러 발생")
-
-            # 공격시도 감지
+            if token_serializer.is_valid():
+                access_token = token_serializer.validated_data
+                result = {"token": access_token}
+                return response.http_200(result)
             else:
-                return response.http_403("사용자가 삭제한 토큰입니다.")
+                return response.http_503("서버 에러 발생")
 
-        # 기간 만료된 토큰
-        except jwt.exceptions.ExpiredSignatureError:
-            return response.http_401("토큰의 기간이 만료되었습니다.")
-
-        # 사용 불가능 토큰
-        except jwt.exceptions.InvalidTokenError:
-            return response.http_400("사용할 수 없는 토큰입니다.")
+        # 공격시도 감지
+        else:
+            return response.http_403("사용자가 삭제한 토큰입니다.")
 
 
 # -- 전화번호 인증  -- #
@@ -359,28 +339,23 @@ class AuthVerify(APIView):
 class CheckPassword(APIView):
     def post(self, request):
         try:
-            access = request.headers.get('Authorization', None)
+            access_token = request.headers.get('Authorization', None)
+
+            jwt_decode_data = jwt_decode_handler(access_token)
+            jwt_is_valid, user = jwt_decode_data[0], jwt_decode_data[1]
+
+            if not jwt_is_valid:
+                http_error_response = jwt_decode_data[1]
+                return http_error_response
+
             password = request.data['password']
-
-            # JWT 인증(Access Token)
-            payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'])
-
-            # 사용자 조회
-            pk = payload.get('user_id')
-            user = get_object_or_404(User, pk=pk)
-
             if user.check_password(password):
                 return response.HTTP_200
             else:
                 return response.http_403("비밀번호가 일치하지 않습니다.")
 
-        # Access_Token 기간 만료
-        except jwt.exceptions.ExpiredSignatureError:
-            return response.http_401("토큰의 유효기간이 만료되었습니다.")
-
-        # 사용 불가능 토큰
-        except jwt.exceptions.InvalidTokenError:
-            return response.http_400("사용할 수 없는 토큰입니다.")
+        except Exception as e:
+            return response.http_400(str(e))
 
 
 # -- 비밀번호 변경 -- #
@@ -389,30 +364,20 @@ class ChangePasswordView(APIView):
         serializer = UserPasswordSerializer(data=request.data)
 
         if serializer.is_valid():
+            # 비인증(비로그인) 회원 조회
             try:
                 username = request.data['username']
-            # 유저 조회
-            except:
-                try:
-                    access = request.headers.get('Authorization', None)
-
-                    # JWT 인증(Access Token)
-                    payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'])
-
-                    # 사용자 조회
-                    pk = payload.get('user_id')
-                    user = get_object_or_404(User, pk=pk)
-
-                    # Access_Token 기간 만료
-                except jwt.exceptions.ExpiredSignatureError:
-                    return response.http_401("토큰의 기간이 만료되었습니다.")
-
-                    # 사용 불가능 토큰
-                except jwt.exceptions.InvalidTokenError:
-                    return response.http_400("사용할 수 없는 토큰입니다.")
-
-            else:
                 user = get_object_or_404(User, username=username)
+            # 인증(로그인) 회원 조회
+            except:
+                access_token = request.headers.get('Authorization', None)
+
+                jwt_data = jwt_decode_handler(access_token)
+                jwt_is_valid, user = jwt_data[0], jwt_data[1]
+
+                if not jwt_is_valid:
+                    http_error_response = jwt_data[1]
+                    return http_error_response
 
             password = serializer.validated_data['password']
 
@@ -421,7 +386,7 @@ class ChangePasswordView(APIView):
 
             return response.HTTP_200
         else:
-            return response.http_400("비밀번호를 확인해주세요")
+            return response.http_400(serializer.errors)
 
 
 # -- 아이디 찾기(부분) -- #
