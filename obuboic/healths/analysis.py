@@ -621,5 +621,5 @@ class SimpleAnalysisDiagram:
         else:
             rate = 5
 
-        result = {"rate": rate, }
-        return result
+        # result = {"rate": rate, }
+        return rate
