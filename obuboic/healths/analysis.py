@@ -1,8 +1,8 @@
 CONVERT_PHYSIC = {
-        12: 0.0, 13: 13.19, 14: 22.24, 15: 28.04, 16: 32.38, 17: 35.92, 18: 38.96, 19: 41.68,
-        20: 44.18, 21: 46.52, 22: 48.76, 23: 50.93, 24: 53.06, 25: 55.17, 26: 57.30, 27: 59.46, 28: 61.71, 29: 64.06,
-        30: 66.59, 31: 69.36, 32: 72.50, 33: 76.22, 34: 81.02, 35: 88.40, 36: 100.0
-    }
+    12: 0.0, 13: 13.19, 14: 22.24, 15: 28.04, 16: 32.38, 17: 35.92, 18: 38.96, 19: 41.68,
+    20: 44.18, 21: 46.52, 22: 48.76, 23: 50.93, 24: 53.06, 25: 55.17, 26: 57.30, 27: 59.46, 28: 61.71, 29: 64.06,
+    30: 66.59, 31: 69.36, 32: 72.50, 33: 76.22, 34: 81.02, 35: 88.40, 36: 100.0
+}
 
 CONVERT_REHAB = {
     10: 0.0, 11: 11.51, 12: 19.43, 13: 24.72, 14: 28.93, 15: 32.62, 16: 36.06, 17: 39.46, 18: 42.96, 19: 46.69,
@@ -23,28 +23,39 @@ CONVERT_NURSE = {
     0: 0.0, 1: 19.84, 2: 36.9, 3: 47.84, 4: 55.81, 5: 62.53, 6: 68.98, 7: 76.11, 8: 85.86, 9: 100.0
 }
 
-CLEAN_DIC = {0: 9.4, 1: 3.9, 2: 14.3, 3: 2.6, 4: 6.5, 5: 11.2, 6: 16.4, 7: 1.7, 8: 3.4, 9: 5.3, 10: 8.0, 11: 8.6, 12: 11.9, 13: 11.6, 14: 16.8, 15: 1.2, 16: 3.0, 17: 2.9, 18: 4.1, 19: 9.0, 20: 13.0, 21: 16.4, 22: 17.2, 23: 15.4, 24: 19.6}
-BATH_DIC = {0: 5.6, 1: 3.3, 2: 11.9, 3: 1.2, 4: 4.8, 5: 10.8, 6: 6.8, 7: 12.9, 8: 0.9, 9: 2.6, 10: 3.8, 11: 8.3, 12: 9.0, 13: 15.0, 14: 11.8, 15: 15.8, 16: 0.5, 17: 1.3, 18: 2.9, 19: 5.0, 20: 5.3, 21: 10.2, 22: 8.8, 23: 12.5, 24: 12.8, 25: 18.7, 26: 0.4, 27: 1.2, 28: 1.0, 29: 1.8, 30: 0.3, 31: 0.7, 32: 1.2, 33: 2.5}
-EAT_DIC = {0: 15.2, 1: 12.7, 2: 35.6, 3: 10.1, 4: 20.1, 5: 31.7, 6: 37.6, 7: 8.3, 8: 12.9, 9: 16.1, 10: 23.4, 11: 7.1, 12: 9.4, 13: 12.2, 14: 15.1, 15: 13.9, 16: 18.7, 17: 11.5, 18: 14.3, 19: 17.5, 20: 21.4}
-ASSIST_DIC = {0: 7.2, 1: 3.5, 2: 13.3, 3: 2.0, 4: 6.0, 5: 8.6, 6: 15.1, 7: 1.2, 8: 2.7, 9: 4.9, 10: 7.8, 11: 7.9, 12: 10.9, 13: 14.0, 14: 18.7, 15: 4.3, 16: 6.8, 17: 6.6, 18: 9.2, 19: 6.4, 20: 9.3, 21: 3.6, 22: 6.0}
-BEHAV_DIC = {0: 1.3, 1: 0.9, 2: 1.9, 3: 0.7, 4: 1.1, 5: 1.4, 6: 2.0, 7: 0.6, 8: 0.8, 9: 0.9, 10: 1.3, 11: 1.6, 12: 2.6, 13: 2.2, 14: 3.2}
-SUPPROT_DIC = {0: 18.9, 1: 14.7, 2: 21.5, 3: 12.5, 4: 16.9, 5: 20.3, 6: 26.1, 7: 17.6, 8: 21.2, 9: 21.7, 10: 28.4, 11: 19.8, 12: 23.0, 13: 17.3, 14: 21.0, 15: 19.7, 16: 23.6}
-NURSE_DIC = {0: 9.3, 1: 8.7, 2: 15.4, 3: 8.3, 4: 9.6, 5: 14.6, 6: 12.4, 7: 22.5, 8: 7.6, 9: 9.7, 10: 9.6, 11: 14.7, 12: 7.1, 13: 9.5, 14: 6.7, 15: 8.1, 16: 7.4, 17: 11.6}
-REHAB_DIC = {0: 4.3, 1: 3.0, 2: 4.3, 3: 5.5, 4: 2.5, 5: 3.7, 6: 4.6, 7: 3.1, 8: 4.8, 9: 6.3, 10: 4.1, 11: 6.3, 12: 2.1, 13: 4.2, 14: 4.5, 15: 3.2, 16: 4.0, 17: 5.7, 18: 3.8, 19: 2.7}
+CLEAN_DIC = {0: 9.4, 1: 3.9, 2: 14.3, 3: 2.6, 4: 6.5, 5: 11.2, 6: 16.4, 7: 1.7, 8: 3.4, 9: 5.3, 10: 8.0, 11: 8.6,
+             12: 11.9, 13: 11.6, 14: 16.8, 15: 1.2, 16: 3.0, 17: 2.9, 18: 4.1, 19: 9.0, 20: 13.0, 21: 16.4, 22: 17.2,
+             23: 15.4, 24: 19.6}
+BATH_DIC = {0: 5.6, 1: 3.3, 2: 11.9, 3: 1.2, 4: 4.8, 5: 10.8, 6: 6.8, 7: 12.9, 8: 0.9, 9: 2.6, 10: 3.8, 11: 8.3,
+            12: 9.0, 13: 15.0, 14: 11.8, 15: 15.8, 16: 0.5, 17: 1.3, 18: 2.9, 19: 5.0, 20: 5.3, 21: 10.2, 22: 8.8,
+            23: 12.5, 24: 12.8, 25: 18.7, 26: 0.4, 27: 1.2, 28: 1.0, 29: 1.8, 30: 0.3, 31: 0.7, 32: 1.2, 33: 2.5}
+EAT_DIC = {0: 15.2, 1: 12.7, 2: 35.6, 3: 10.1, 4: 20.1, 5: 31.7, 6: 37.6, 7: 8.3, 8: 12.9, 9: 16.1, 10: 23.4, 11: 7.1,
+           12: 9.4, 13: 12.2, 14: 15.1, 15: 13.9, 16: 18.7, 17: 11.5, 18: 14.3, 19: 17.5, 20: 21.4}
+ASSIST_DIC = {0: 7.2, 1: 3.5, 2: 13.3, 3: 2.0, 4: 6.0, 5: 8.6, 6: 15.1, 7: 1.2, 8: 2.7, 9: 4.9, 10: 7.8, 11: 7.9,
+              12: 10.9, 13: 14.0, 14: 18.7, 15: 4.3, 16: 6.8, 17: 6.6, 18: 9.2, 19: 6.4, 20: 9.3, 21: 3.6, 22: 6.0}
+BEHAV_DIC = {0: 1.3, 1: 0.9, 2: 1.9, 3: 0.7, 4: 1.1, 5: 1.4, 6: 2.0, 7: 0.6, 8: 0.8, 9: 0.9, 10: 1.3, 11: 1.6, 12: 2.6,
+             13: 2.2, 14: 3.2}
+SUPPROT_DIC = {0: 18.9, 1: 14.7, 2: 21.5, 3: 12.5, 4: 16.9, 5: 20.3, 6: 26.1, 7: 17.6, 8: 21.2, 9: 21.7, 10: 28.4,
+               11: 19.8, 12: 23.0, 13: 17.3, 14: 21.0, 15: 19.7, 16: 23.6}
+NURSE_DIC = {0: 9.3, 1: 8.7, 2: 15.4, 3: 8.3, 4: 9.6, 5: 14.6, 6: 12.4, 7: 22.5, 8: 7.6, 9: 9.7, 10: 9.6, 11: 14.7,
+             12: 7.1, 13: 9.5, 14: 6.7, 15: 8.1, 16: 7.4, 17: 11.6}
+REHAB_DIC = {0: 4.3, 1: 3.0, 2: 4.3, 3: 5.5, 4: 2.5, 5: 3.7, 6: 4.6, 7: 3.1, 8: 4.8, 9: 6.3, 10: 4.1, 11: 6.3, 12: 2.1,
+             13: 4.2, 14: 4.5, 15: 3.2, 16: 4.0, 17: 5.7, 18: 3.8, 19: 2.7}
 
 
 class AnalysisDiagram:
-    physic_score,       recog_score,         behav_score,        nurse_score,        rehab_score = 0, 0, 0, 0, 0
-    physic_clothes,     physic_wash_face,    physic_brush_teeth, physic_take_bath,   physic_eat,        physic_change_position, physic_stand_sit,   physic_move_sit,      physic_room_out,  physic_use_bathroom, physic_control_defecation, physic_control_fee = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-    recog_demen,        recog_short_memory,  recog_date,         recog_place,        recog_age,         recog_indicate,         recog_judge,        recog_commu = 0, 0, 0, 0, 0, 0, 0, 0
-    behav_delusion,     behav_hallucination, behav_sad,          behav_chaos,        behav_resistance,  behav_unstable,         behav_lost,         behav_bad_aggressive, behav_go_outside, behav_break,         behav_bad_behav,   behav_hide,   behav_bad_dress,       behav_bad_bath = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-    nurse_bronchial,    nurse_suction,       nurse_oxygen,       nurse_press,        nurse_camouflage,  nurse_pain,             nurse_fee,          nurse_jangru,         nurse_dialysis = 0, 0, 0, 0, 0, 0, 0, 0, 0
-    rehab_right_up,     rehab_right_down,   rehab_left_up,      rehab_left_down = 0, 0, 0, 0
-    rehab_join_shoulder, rehab_joint_elbow,  rehab_joint_wrist,  rehab_joint_hip,    rehab_joint_knee,  rehab_joint_ankle = 0, 0, 0, 0, 0, 0
+    physic_score, recog_score, behav_score, nurse_score, rehab_score = 0, 0, 0, 0, 0
+    physic_clothes, physic_wash_face, physic_brush_teeth, physic_take_bath, physic_eat, physic_change_position, physic_stand_sit, physic_move_sit, physic_room_out, physic_use_bathroom, physic_control_defecation, physic_control_fee = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    recog_demen, recog_short_memory, recog_date, recog_place, recog_age, recog_indicate, recog_judge, recog_commu = 0, 0, 0, 0, 0, 0, 0, 0
+    behav_delusion, behav_hallucination, behav_sad, behav_chaos, behav_resistance, behav_unstable, behav_lost, behav_bad_aggressive, behav_go_outside, behav_break, behav_bad_behav, behav_hide, behav_bad_dress, behav_bad_bath = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    nurse_bronchial, nurse_suction, nurse_oxygen, nurse_press, nurse_camouflage, nurse_pain, nurse_fee, nurse_jangru, nurse_dialysis = 0, 0, 0, 0, 0, 0, 0, 0, 0
+    rehab_right_up, rehab_right_down, rehab_left_up, rehab_left_down = 0, 0, 0, 0
+    rehab_join_shoulder, rehab_joint_elbow, rehab_joint_wrist, rehab_joint_hip, rehab_joint_knee, rehab_joint_ankle = 0, 0, 0, 0, 0, 0
 
     def save(self, data):
         global CONVERT_PHYSIC, CONVERT_REHAB, CONVERT_BEHAV, CONVERT_RECOG, CONVERT_NURSE
-        physical, recognize, behavior, nursing, rehab = data['physical'], data['recognize'], data['behavior'], data['nursing'], data['rehabilitation']
+        physical, recognize, behavior, nursing, rehab = data['physical'], data['recognize'], data['behavior'], data[
+            'nursing'], data['rehabilitation']
 
         # -- 신체기능 설문 점수 저장 --#
         score = 0
@@ -339,8 +350,14 @@ class AnalysisDiagram:
         else:
             rate = 5
 
-        result = {"rate": rate, }
-        return result
+        return rate
+
+    def get_score(self):
+        score = self.clean_diagram() + self.bath_diagram() + self.eat_diagram() \
+                + self.assist_diagram() + self.behav_diagram() + self.support_diagram() \
+                + self.nurse_diagram() + self.rehab_diagram()
+
+        return score
 
 
 class SimpleAnalysisDiagram:
@@ -353,7 +370,8 @@ class SimpleAnalysisDiagram:
 
     def save(self, data):
         global CONVERT_PHYSIC, CONVERT_REHAB, CONVERT_BEHAV, CONVERT_RECOG, CONVERT_NURSE
-        physical, recognize, behavior, nursing, rehab = data['physical'], data['recognize'], data['behavior'], data['nursing'], data['rehabilitation']
+        physical, recognize, behavior, nursing, rehab = data['physical'], data['recognize'], data['behavior'], data[
+            'nursing'], data['rehabilitation']
 
         # -- 신체기능 설문 점수 저장 --#
         temp = 0
@@ -621,5 +639,11 @@ class SimpleAnalysisDiagram:
         else:
             rate = 5
 
-        # result = {"rate": rate, }
         return rate
+
+    def get_score(self):
+        score = self.clean_diagram() + self.bath_diagram() + self.eat_diagram() \
+                + self.assist_diagram() + self.behav_diagram() + self.support_diagram() \
+                + self.nurse_diagram() + self.rehab_diagram()
+
+        return score

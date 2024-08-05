@@ -91,6 +91,16 @@ def http_409(error):
     )
 
 
+def http_500(error):
+    return Response(
+        {
+            "success": False,
+            "message": error
+        },
+        status=status.HTTP_500_INTERNAL_SERVER_ERROR
+    )
+
+
 def http_503(error):
     return Response(
         {
