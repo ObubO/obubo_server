@@ -53,36 +53,48 @@ def jwt_decode_handler(token):
 class UserCreateView(APIView):
     # 중복 아이디 확인
     def get(self, request, username):
-        query_dict = QueryDict('username='+username)
-        serializer = CheckUserIdSerializer(data=query_dict)
+        try:
+            query_dict = QueryDict('username='+username)
+            serializer = CheckUserIdSerializer(data=query_dict)
 
-        if serializer.is_valid():
-            return response.HTTP_200
-        else:
-            return response.http_400(serializer.errors)
+            if serializer.is_valid():
+                return response.HTTP_200
+            else:
+                return response.http_400(serializer.errors)
+
+        except:
+            return response.http_500("서버 확인 필요")
 
     # 회원가입
     def post(self, request):
-        serializer = SignUpSerializer(data=request.data)
+        try:
+            serializer = SignUpSerializer(data=request.data)
 
-        if serializer.is_valid():
-            serializer.create(serializer.validated_data)
+            if serializer.is_valid():
+                serializer.create(serializer.validated_data)
 
-            return response.HTTP_200
-        else:
-            return response.http_400(serializer.errors)
+                return response.HTTP_200
+            else:
+                return response.http_400(serializer.errors)
+
+        except:
+            return response.http_500("서버 확인 필요")
 
 
 # 닉네임 중복 확인
 class CheckNickname(APIView):
     def get(self, request, nickname):
-        query_dict = QueryDict('nickname='+nickname)
-        serializer = CheckNicknameSerializer(data=query_dict)
+        try:
+            query_dict = QueryDict('nickname='+nickname)
+            serializer = CheckNicknameSerializer(data=query_dict)
 
-        if serializer.is_valid():
-            return response.HTTP_200
-        else:
-            return response.http_400(serializer.errors)
+            if serializer.is_valid():
+                return response.HTTP_200
+            else:
+                return response.http_400(serializer.errors)
+
+        except:
+            return response.http_500("서버 확인 필요")
 
 
 # 계정 조회/수정 API
@@ -99,19 +111,18 @@ class AuthView(APIView):
     def get(self, request):
         access_token = request.headers.get('Authorization', None)
 
-        token_data = jwt_decode_handler(access_token)
-        jwt_is_valid = token_data[0]
+        jwt_decode_data = jwt_decode_handler(access_token)
+        jwt_is_valid, user = jwt_decode_data[0], jwt_decode_data[1]
 
-        if jwt_is_valid:
-            user = token_data[1]
-            member = get_object_or_404(Member, user=user)
-            serializer = MemberSerializer(instance=member)
-            result = {"user": serializer.data}
+        if not jwt_is_valid:
+            result = jwt_decode_data[1]
+            return response.http_400(result)
 
-            return response.http_200(result)
-        else:
-            http_error_response = token_data[1]
-            return http_error_response
+        member = get_object_or_404(Member, user=user)
+        member_serializer = MemberSerializer(instance=member)
+        result = {"user": member_serializer.data}
+
+        return response.http_200(result)
 
     def patch(self, request):
         access_token = request.headers.get('Authorization', None)
@@ -171,41 +182,43 @@ class LoginView(APIView):
 class LogoutView(APIView):
     def post(self, request):
         refresh = request.headers.get('Authorization', None)
+
+        # JWT 인증 - 기간만료 무시
         try:
-            # JWT 인증(Refesh Token) - 기간만료 무시
             payload = jwt.decode(refresh, SECRET_KEY, algorithms=['HS256'], options={"verify_exp": False})
-
-            # 사용자 조회
-            pk = payload.get('user_id')
-            user = get_object_or_404(User, pk=pk)
-
-            # 해당 회원의 Refresh Token 삭제
-            user.refresh_token = None
-            user.save()
-
-            return response.HTTP_200
-
         except jwt.exceptions.InvalidTokenError:
             return response.http_400("유효하지 않은 토큰입니다.")
+
+        # 사용자 조회
+        pk = payload.get('user_id')
+        user = get_object_or_404(User, pk=pk)
+
+        # 해당 회원의 Refresh Token 삭제
+        user.refresh_token = None
+        user.save()
+
+        return response.HTTP_200
 
 
 # 회원 탈퇴 API
 class WithdrawalView(APIView):
     def post(self, request):
-        access_token = request.headers.get('Authorization', None)
+        try:
+            access_token = request.headers.get('Authorization', None)
 
-        token_data = jwt_decode_handler(access_token)
-        jwt_is_valid = token_data[0]
+            jwt_decode_data = jwt_decode_handler(access_token)
+            jwt_is_valid, user = jwt_decode_data[0], jwt_decode_data[1]
 
-        if jwt_is_valid:
-            user = token_data[1]
+            if not jwt_is_valid:
+                http_error_response = jwt_decode_data[1]
+                return http_error_response
+
             user.is_active = False
             user.save()
 
             return response.HTTP_200
-        else:
-            http_error_response = token_data[1]
-            return http_error_response
+        except:
+            return response.http_500("서버 확인 필요")
 
 
 # AccessToken 재발급 API
