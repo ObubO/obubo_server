@@ -11,7 +11,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 from rest_framework_simplejwt.views import TokenRefreshView
 from .models import User, UserType, Member, TAC, TACAgree, AuthTable
-from .serializers import UserPasswordSerializer, MemberSerializer, CheckNicknameSerializer, CheckUserIdSerializer, AuthTablePhoneSerializer, AuthTableSerializer, SignUpSerializer
+from .serializers import CheckPasswordSerializer, MemberSerializer, CheckNicknameSerializer, CheckUserIdSerializer, AuthTablePhoneSerializer, AuthTableSerializer, SignUpSerializer, UserTypeSerializer
 from sms import message
 from common import response
 
@@ -374,7 +374,7 @@ class CheckPassword(APIView):
 # -- 비밀번호 변경 -- #
 class ChangePasswordView(APIView):
     def post(self, request):
-        serializer = UserPasswordSerializer(data=request.data)
+        serializer = CheckPasswordSerializer(data=request.data)
 
         if serializer.is_valid():
             # 비인증(비로그인) 회원 조회

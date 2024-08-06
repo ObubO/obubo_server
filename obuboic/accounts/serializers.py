@@ -25,29 +25,11 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
 
-class GetUserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = 'username'
-
-
-class UserPasswordSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['password']
-
-
-class CheckUserIdSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['username', ]
-
-
 class MemberSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Member
-        fields = ['name', 'nickname', 'gender', 'birth', 'phone', 'email']
+        fields = ['name', 'nickname', 'gender', 'birth', 'phone', 'email', 'user_type']
 
     def create(self, validated_data):
         validated_email = self.get_validated_email(validated_data["email"])
@@ -68,6 +50,18 @@ class MemberSerializer(serializers.ModelSerializer):
             email = None
 
         return email
+
+
+class CheckPasswordSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['password']
+
+
+class CheckUserIdSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['username', ]
 
 
 class CheckNicknameSerializer(serializers.ModelSerializer):
