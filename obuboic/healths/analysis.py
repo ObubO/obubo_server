@@ -357,7 +357,7 @@ class AnalysisDiagram:
                 + self.assist_diagram() + self.behav_diagram() + self.support_diagram() \
                 + self.nurse_diagram() + self.rehab_diagram()
 
-        return score
+        return round(score, 1)
 
 
 class SimpleAnalysisDiagram:
@@ -646,4 +646,4 @@ class SimpleAnalysisDiagram:
                 + self.assist_diagram() + self.behav_diagram() + self.support_diagram() \
                 + self.nurse_diagram() + self.rehab_diagram()
 
-        return score
+        return round(score, 1)
