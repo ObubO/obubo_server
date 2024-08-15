@@ -49,7 +49,6 @@ def jwt_decode_handler(token):
 
 
 # -- 회원가입 -- #
-@method_decorator(csrf_exempt, name='dispatch')
 class UserCreateView(APIView):
     # 중복 아이디 확인
     def get(self, request, username):
@@ -149,7 +148,6 @@ class AuthView(APIView):
 
 
 # 계정 로그인 API
-@method_decorator(csrf_exempt, name='dispatch')
 class LoginView(APIView):
     def post(self, request):
         try:
@@ -178,7 +176,6 @@ class LoginView(APIView):
 
 
 # 계정 로그아웃 API
-@method_decorator(csrf_exempt, name='dispatch')
 class LogoutView(APIView):
     def post(self, request):
         refresh = request.headers.get('Authorization', None)
@@ -213,8 +210,7 @@ class WithdrawalView(APIView):
                 http_error_response = jwt_decode_data[1]
                 return http_error_response
 
-            user.is_active = False
-            user.save()
+            user.delete()
 
             return response.HTTP_200
         except:
@@ -222,7 +218,6 @@ class WithdrawalView(APIView):
 
 
 # AccessToken 재발급 API
-@method_decorator(csrf_exempt, name='dispatch')
 class CustomTokenRefreshView(TokenRefreshView):
     def post(self, request):
         refresh_token = request.data.get('refresh')
