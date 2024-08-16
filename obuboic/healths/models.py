@@ -27,6 +27,15 @@ class CareGradeDetail(models.Model):
         verbose_name = "요양등급세부평가"
         verbose_name_plural = "요양등급세부평가 그룹"
 
+    def set_user(self, user):
+        self.user = user
+
+    def set_gender(self, gender):
+        self.gender = gender
+
+    def set_age(self, age):
+        self.age = age
+
 
 class CareGradeSimple(models.Model):
     user = models.ForeignKey(

@@ -18,3 +18,16 @@ class CareGradeDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = CareGradeDetail
         fields = '__all__'
+
+
+class UserCareDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CareGradeDetail
+        fields = ['data']
+
+    def create(self, validated_data):
+        care = CareGradeDetail(
+            data=validated_data['data'],
+        )
+
+        return care

@@ -1,6 +1,4 @@
-import random
-
-from django.core.validators import RegexValidator
+from datetime import date
 from django.db import models
 from django.contrib.auth.models import PermissionsMixin
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
@@ -117,6 +115,17 @@ class Member(models.Model):
 
     def __str__(self):
         return self.name
+
+    def get_age(self):
+        today = date.today()
+        age = today.year - self.birth.year
+        if (today.month, today.day) < (self.birth.month, self.birth.day):
+            age -= 1
+
+        return age
+
+    def get_gender(self):
+        return self.gender
 
 
 class TAC(models.Model):

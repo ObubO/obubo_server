@@ -1,15 +1,12 @@
-from django.views.decorators.csrf import csrf_exempt
-from django.utils.decorators import method_decorator
-from rest_framework import status
-from rest_framework.response import Response
 from rest_framework.views import APIView
-from .serializers import CareGradeExSerializer, CareGradeSimpleSerializer, CareGradeDetailSerializer
+from django.shortcuts import get_object_or_404
+from .serializers import CareGradeExSerializer, CareGradeSimpleSerializer, UserCareDetailSerializer
 from .analysis import AnalysisDiagram, SimpleAnalysisDiagram
 from common import response
+from accounts import views as account
+from accounts import models
 
 
-# Create your views here.
-@method_decorator(csrf_exempt, name='dispatch')
 class CareGradeExAPI(APIView):
     def post(self, request):
         serializer = CareGradeExSerializer(data=request.data)
@@ -23,20 +20,20 @@ class CareGradeExAPI(APIView):
                 analysis.save(data)
                 score = analysis.get_score()
                 rate = analysis.get_rate(score)
+
+                result = {"score": score, "rate": rate}
             except:
                 return response.http_400("데이터 에러")
 
             # 간소평가 등록
             serializer.save()
 
-            result = {"score": score, "rate": rate}
             return response.http_200(result)
 
         else:
             return response.http_400(serializer.errors)
 
 
-@method_decorator(csrf_exempt, name='dispatch')
 class CareGradeSimpleAPI(APIView):
     def post(self, request):
         serializer = CareGradeSimpleSerializer(data=request.data)
@@ -62,27 +59,46 @@ class CareGradeSimpleAPI(APIView):
             return response.http_400(serializer.errors)
 
 
-@method_decorator(csrf_exempt, name='dispatch')
 class CareGradeDetailAPI(APIView):
     def post(self, request):
-        serializer = CareGradeDetailSerializer(data=request.data)
+        # User 정보 조회
+        access_token = request.headers.get('Authorization', None)
+        jwt_decode_data = account.jwt_decode_handler(access_token)
+        jwt_is_valid, user = jwt_decode_data[0], jwt_decode_data[1]
 
-        if serializer.is_valid():
-            data = serializer.validated_data["data"]
+        if not jwt_is_valid:
+            result = jwt_decode_data[1]
+            return response.http_400(result)
 
-            # 요양등급평가 분석
+        member = get_object_or_404(models.Member, user=user)
+        age = member.get_age()
+        gender = member.get_gender()
+
+        # 등급평가 데이터 유효성 검사
+        care_serializer = UserCareDetailSerializer(data=request.data)
+        if care_serializer.is_valid():
+
+            data = care_serializer.validated_data['data']
+
+            # 등급평가 분석
             try:
                 analysis = AnalysisDiagram()
                 analysis.save(data)
                 score = analysis.get_score()
                 rate = analysis.get_rate(score)
+                result = {"score": score, "rate": rate}
             except:
                 return response.http_400("데이터 에러")
 
-            serializer.save()
+            # 등급평가 정보 저장
+            care_instance = care_serializer.create(care_serializer.validated_data)
+            care_instance.set_user(user)
+            care_instance.set_gender(gender)
+            care_instance.set_age(age)
 
-            result = {"score": score, "rate": rate}
+            care_instance.save()
+
             return response.http_200(result)
 
         else:
-            return response.http_400(serializer.errors)
+            return response.http_400(care_serializer.errors)
