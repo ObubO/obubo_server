@@ -1,12 +1,10 @@
-from django import forms
 from django.contrib import admin
 from django.contrib.auth.models import Group
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from django.contrib.auth.forms import ReadOnlyPasswordHashField
 
 from django.contrib.auth.forms import UserChangeForm, UserCreationForm
 
-from .models import User, Member, UserType, TAC, TACAgree
+from .models import User, Member, UserType, Terms, UserTerms
 
 
 # Register your models here.
@@ -51,29 +49,31 @@ class UserTypeAdmin(admin.ModelAdmin):
     list_display = ('type_name', )
 
 
-class TACAdmin(admin.ModelAdmin):
+class TermsAdmin(admin.ModelAdmin):
     fields = ['title', 'content', 'is_necessary', ]
     list_display = ('title', 'is_necessary', )
 
     readonly_fields = []
 
-    search_fields = ('title',)
-    ordering = ('title',)
+    serach_fields = ('title', )
+    ordering = ('title', )
 
 
-class TACAgreeAdmin(admin.ModelAdmin):
-    fields = ['user', 'tac', 'is_consent', 'consent_date', ]
-    list_display = ('user', 'tac', 'is_consent', )
+class UserTermsAdmin(admin.ModelAdmin):
+    fields = ['user', 'terms', 'is_consent', 'conset_date', ]
+    list_display = ('user', 'terms', 'is_consent', )
 
-    readonly_fields = ['user', 'tac', 'is_consent', 'consent_date', ]
+    readonly_fields = ['user', 'terms', 'is_consent', 'consent_date', ]
 
-    search_fields = ('user',)
-    ordering = ('user',)
+    search_fiedls = ('user',)
+    ordering = ('user', )
 
 
 admin.site.register(User, UserAdmin)
 admin.site.register(Member, MemberAdmin)
 admin.site.register(UserType, UserTypeAdmin)
-admin.site.register(TAC, TACAdmin)
-admin.site.register(TACAgree, TACAgreeAdmin)
+admin.site.register(Terms, TermsAdmin)
+admin.site.register(UserTerms, UserTermsAdmin)
+# admin.site.register(TAC, TACAdmin)
+# admin.site.register(TACAgree, TACAgreeAdmin)
 admin.site.unregister(Group)

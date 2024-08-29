@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from rest_framework import serializers
-from .models import UserType, User, Member, TAC, TACAgree, AuthTable
+from .models import UserType, User, Member, Terms, UserTerms, AuthTable
 from django.shortcuts import get_object_or_404
 
 
@@ -70,18 +70,18 @@ class CheckNicknameSerializer(serializers.ModelSerializer):
         fields = ['nickname', ]
 
 
-class TACSerializer(serializers.ModelSerializer):
+class TermsSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = TAC
+        model = Terms
         fields = '__all__'
 
 
-class TACAgreeSerializer(serializers.ModelSerializer):
+class UserTermsSeriailzer(serializers.ModelSerializer):
 
     class Meta:
-        model = TACAgree
-        fields = ['is_consent', ]
+        model = UserTerms
+        fields = ['is_consent']
 
 
 class AuthTablePhoneSerializer(serializers.ModelSerializer):
@@ -103,16 +103,16 @@ class SignUpSerializer(serializers.ModelSerializer):
     password = serializers.CharField(required=True)
     email = serializers.EmailField(required=True, allow_blank=True)
     typeNo = serializers.IntegerField(required=True)
-    tac1 = serializers.BooleanField(required=True)
-    tac2 = serializers.BooleanField(required=True)
-    tac3 = serializers.BooleanField(required=True)
-    tac4 = serializers.BooleanField(required=True)
+    terms1 = serializers.BooleanField(required=True)
+    terms2 = serializers.BooleanField(required=True)
+    terms3 = serializers.BooleanField(required=True)
+    terms4 = serializers.BooleanField(required=True)
 
     class Meta:
         model = Member
         fields = ['username', 'password',
                   'name', 'nickname', 'gender', 'birth', 'phone', 'email', 'typeNo',
-                  'tac1', 'tac2', 'tac3', 'tac4', ]
+                  'terms1', 'terms2', 'terms3', 'terms4', ]
 
     def create(self, validated_data):
 
@@ -144,14 +144,15 @@ class SignUpSerializer(serializers.ModelSerializer):
         member.save()
 
         # 약관동의 인스턴스 생성
-        tacs = TAC.objects.all()
-        for tac in tacs:
-            tac_name = 'tac' + str(tac.id)
-            validated_term = validated_data[tac_name]
-            TACAgree.objects.create(
+        terms_list = Terms.objects.all()
+        for terms in terms_list:
+            terms_name = 'terms' + str(terms.id)
+            print(terms_name)
+            validated_terms = validated_data[terms_name]
+            UserTerms.objects.create(
                 user=user,
-                tac=get_object_or_404(TAC, id=tac.id),
-                is_consent=validated_term,
+                terms=get_object_or_404(Terms, id=terms.id),
+                is_consent=validated_terms,
                 consent_date=datetime.now(),
             )
         return None

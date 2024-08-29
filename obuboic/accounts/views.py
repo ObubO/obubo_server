@@ -2,16 +2,14 @@ import jwt
 import random
 from datetime import datetime, timedelta
 from django.http import QueryDict
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import get_object_or_404
 from django.contrib.auth import authenticate
 from django.conf import settings
-from django.views.decorators.csrf import csrf_exempt
-from django.utils.decorators import method_decorator
 from rest_framework.views import APIView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 from rest_framework_simplejwt.views import TokenRefreshView
-from .models import User, UserType, Member, TAC, TACAgree, AuthTable
-from .serializers import CheckPasswordSerializer, MemberSerializer, CheckNicknameSerializer, CheckUserIdSerializer, AuthTablePhoneSerializer, AuthTableSerializer, SignUpSerializer, UserTypeSerializer
+from .models import User, Member, AuthTable
+from .serializers import CheckPasswordSerializer, MemberSerializer, CheckNicknameSerializer, CheckUserIdSerializer, AuthTablePhoneSerializer, AuthTableSerializer, SignUpSerializer
 from sms import message
 from common import response
 
@@ -67,6 +65,7 @@ class UserCreateView(APIView):
     # 회원가입
     def post(self, request):
         try:
+            print(request.data)
             serializer = SignUpSerializer(data=request.data)
 
             if serializer.is_valid():

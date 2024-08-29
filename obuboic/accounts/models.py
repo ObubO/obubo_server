@@ -172,3 +172,38 @@ class AuthTable(models.Model):
 
     def __str__(self):
         return self.phone
+
+
+class Terms(models.Model):
+    title = models.CharField(_("name"), max_length=20)
+    content = models.TextField(_("name"))
+    is_necessary = models.BooleanField(_("is_necessary"), default=True)
+
+    objects = models.Manager()
+
+    class Meta:
+        verbose_name = "개인정보 이용약관"
+
+    def __str__(self):
+        return self.title
+
+
+class UserTerms(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+    )
+    terms = models.ForeignKey(
+        Terms,
+        on_delete=models.CASCADE,
+    )
+    is_consent = models.CharField(_("is_consent"),max_length=5, choices=CONSENT)
+    consent_date = models.DateField(_("consent_date"), auto_now_add=True)
+
+    objects = models.Manager()
+
+    class Meta:
+        verbose_name = "약관 동의"
+
+    def __str__(self):
+        return self.user.username
