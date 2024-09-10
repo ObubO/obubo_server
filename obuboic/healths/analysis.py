@@ -1,3 +1,5 @@
+import math
+
 CONVERT_PHYSIC = {
     12: 0.0, 13: 13.19, 14: 22.24, 15: 28.04, 16: 32.38, 17: 35.92, 18: 38.96, 19: 41.68,
     20: 44.18, 21: 46.52, 22: 48.76, 23: 50.93, 24: 53.06, 25: 55.17, 26: 57.30, 27: 59.46, 28: 61.71, 29: 64.06,
@@ -356,6 +358,23 @@ class AnalysisDiagram:
         score = self.clean_diagram() + self.bath_diagram() + self.eat_diagram() \
                 + self.assist_diagram() + self.behav_diagram() + self.support_diagram() \
                 + self.nurse_diagram() + self.rehab_diagram()
+
+        if self.recog_demen == 1 and score < 75:
+            tmp = ((1.37 * self.recog_date) + (1.20 * self.behav_chaos) + (0.89 * self.behav_lost)
+                   + (3.29 * self.behav_go_outside) + (0.51 * self.behav_bad_behav) + (1.54 * self.nurse_press)
+                   + (1.94 * self.nurse_fee) + (0.5 * self.rehab_left_up) + (0.89 * self.physic_score)
+                   + (0.18 * self.behav_score) - 27.00)
+
+            tmp = math.exp(tmp)
+            tmp = (tmp / (1 + tmp))
+
+            if tmp >= 0.5:
+                if 60 <= score < 75:
+                    score = 75
+                elif 51 <= score < 60:
+                    score = 60
+                else:
+                    score = 51
 
         return round(score, 1)
 

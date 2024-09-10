@@ -13,7 +13,6 @@ class CareGradeDetail(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
-        unique=True,
         blank=True,
         null=True,
     )
@@ -41,7 +40,6 @@ class CareGradeSimple(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
-        unique=True,
         blank=True,
         null=True,
     )
