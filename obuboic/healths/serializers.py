@@ -23,11 +23,13 @@ class CareGradeDetailSerializer(serializers.ModelSerializer):
 class UserCareDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = CareGradeDetail
-        fields = ['data']
+        fields = ['data', 'age', 'gender']
 
     def create(self, validated_data):
         care = CareGradeDetail(
             data=validated_data['data'],
+            age=validated_data['age'],
+            gender=validated_data['gender'],
         )
 
         return care

@@ -70,14 +70,9 @@ class CareGradeDetailAPI(APIView):
             result = jwt_decode_data[1]
             return response.http_400(result)
 
-        member = get_object_or_404(models.Member, user=user)
-        age = member.get_age()
-        gender = member.get_gender()
-
         # 등급평가 데이터 유효성 검사
         care_serializer = UserCareDetailSerializer(data=request.data)
         if care_serializer.is_valid():
-
             data = care_serializer.validated_data['data']
 
             # 등급평가 분석
@@ -93,8 +88,6 @@ class CareGradeDetailAPI(APIView):
             # 등급평가 정보 저장
             care_instance = care_serializer.create(care_serializer.validated_data)
             care_instance.set_user(user)
-            care_instance.set_gender(gender)
-            care_instance.set_age(age)
 
             care_instance.save()
 
