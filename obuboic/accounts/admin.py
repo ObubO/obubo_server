@@ -60,7 +60,7 @@ class TermsAdmin(admin.ModelAdmin):
 
 
 class UserTermsAdmin(admin.ModelAdmin):
-    fields = ['user', 'terms', 'is_consent', 'conset_date', ]
+    fields = ['user', 'terms', 'is_consent', 'consent_date', ]
     list_display = ('user', 'terms', 'is_consent', )
 
     readonly_fields = ['user', 'terms', 'is_consent', 'consent_date', ]
@@ -74,6 +74,4 @@ admin.site.register(Member, MemberAdmin)
 admin.site.register(UserType, UserTypeAdmin)
 admin.site.register(Terms, TermsAdmin)
 admin.site.register(UserTerms, UserTermsAdmin)
-# admin.site.register(TAC, TACAdmin)
-# admin.site.register(TACAgree, TACAgreeAdmin)
 admin.site.unregister(Group)

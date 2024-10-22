@@ -95,11 +95,11 @@ class Member(models.Model):
         User,
         on_delete=models.CASCADE,
     )
-    name = models.CharField(_("name"), max_length=10, validators=[validate_name])
-    nickname = models.CharField(_("nickname"), max_length=20, unique=True, validators=[validate_nickname])
-    gender = models.CharField(_("gender"), max_length=1, choices=GENDER)
-    birth = models.DateField(_("birth"))
-    phone = models.CharField(_("phone"), max_length=11, unique=True, validators=[validate_phone])
+    name = models.CharField(_("name"), max_length=10, validators=[validate_name], null=True, blank=True)
+    nickname = models.CharField(_("nickname"), max_length=20, unique=True, validators=[validate_nickname], null=True, blank=True)
+    gender = models.CharField(_("gender"), max_length=1, choices=GENDER, null=True, blank=True,)
+    birth = models.DateField(_("birth"), null=True, blank=True)
+    phone = models.CharField(_("phone"), max_length=11, unique=True, validators=[validate_phone], null=True, blank=True)
     email = models.EmailField(_("email"), max_length=50, unique=True, null=True, blank=True)
     user_type = models.ForeignKey(
         UserType,
@@ -116,51 +116,8 @@ class Member(models.Model):
     def __str__(self):
         return self.name
 
-    def get_age(self):
-        today = date.today()
-        age = today.year - self.birth.year
-        if (today.month, today.day) < (self.birth.month, self.birth.day):
-            age -= 1
-
-        return age
-
     def get_gender(self):
         return self.gender
-
-
-class TAC(models.Model):
-    title = models.CharField(_("name"), max_length=20)
-    content = models.TextField(_("name"))
-    is_necessary = models.BooleanField(_("is_necessary"), default=True)
-
-    objects = models.Manager()
-
-    class Meta:
-        verbose_name = "개인정보 이용약관"
-
-    def __str__(self):
-        return self.title
-
-
-class TACAgree(models.Model):
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-    )
-    tac = models.ForeignKey(
-        TAC,
-        on_delete=models.CASCADE,
-    )
-    is_consent = models.CharField(_("is_consent"), max_length=5, choices=CONSENT)
-    consent_date = models.DateTimeField(_("consent_date"), auto_now_add=True)
-
-    objects = models.Manager()
-
-    class Meta:
-        verbose_name = "약관 동의"
-
-    def __str__(self):
-        return self.user.username
 
 
 class AuthTable(models.Model):
