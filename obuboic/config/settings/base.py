@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     # my_apps
     'accounts',
     'healths',
+    'community',
     'sms',
 
 ]
