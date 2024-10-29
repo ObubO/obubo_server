@@ -81,7 +81,6 @@ class CommentView(APIView):
         jwt_decode_data = jwt_decode_handler(access_token)              # 토큰 decoding / jwt_decode_handler의 return 값을 user.pk로 주면 코드 최적화 가능
         jwt_is_valid, user = jwt_decode_data[0], jwt_decode_data[1]     # 회원 정보 조회
 
-        print(0)
         if not jwt_is_valid:                                            # 토큰 유효성 검사
             return response.HTTP_400
 
