@@ -1,6 +1,5 @@
 from datetime import datetime
 from rest_framework import serializers
-from django.shortcuts import get_object_or_404
 from .models import Posts, Comments, PostLikes, CommentLikes
 
 
@@ -11,7 +10,6 @@ class PostSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at']
 
     def create(self, validated_data):
-        print(validated_data)
         instance = Posts.objects.create(
             author=validated_data['author'],
             title=validated_data['title'],

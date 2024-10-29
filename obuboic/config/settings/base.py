@@ -41,6 +41,11 @@ def get_secret(setting, secrets=secrets):
 
 
 SECRET_KEY = get_secret("SECRET_KEY")
+KAKAO_CLIENT_ID = get_secret("KAKAO_CLIENT_ID")
+KAKAO_SIGNUP_REDIRECT_URI = get_secret("KAKAO_SIGNUP_REDIRECT_URI")
+KAKAO_LOGIN_REDIRECT_URI = get_secret("KAKAO_LOGIN_REDIRECT_URI")
+KAKAO_AUTH_GET_TOKEN_URI = get_secret("KAKAO_AUTH_GET_TOKEN_URI")
+KAKAO_AUTH_GET_USER_INFO = get_secret("KAKAO_AUTH_GET_USER_INFO")
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -186,7 +191,7 @@ SIMPLE_JWT = {
     'JTI_CLAIM': 'jti',
 
     'SLIDING_TOKEN_REFRESH_EXP_CLAIM': 'refresh_exp',
-    'SLIDING_TOKEN_LIFETIME': timedelta(minutes=5),
+    'SLIDING_TOKEN_LIFETIME': timedelta(minutes=30),
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
 }
 
