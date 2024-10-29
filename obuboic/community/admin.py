@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Posts
+from .models import Posts, Comments
 
 
 # Register your models here.
@@ -14,4 +14,15 @@ class PostsAdmin(admin.ModelAdmin):
     ordering = ('-created_at', )
 
 
+class CommentsAdmin(admin.ModelAdmin):
+    fields = ['id', 'post', 'author', 'content', 'created_at']
+    list_display = ('id', 'content', 'post', 'author',)
+
+    readonly_fields = ['id', 'post', 'author', 'created_at']
+
+    search_fiedls = ('author', 'post')
+    ordering = ('-created_at',)
+
+
 admin.site.register(Posts, PostsAdmin)
+admin.site.register(Comments, CommentsAdmin)

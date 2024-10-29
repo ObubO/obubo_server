@@ -35,8 +35,7 @@ class Posts(models.Model):
 class Comments(models.Model):
     content = models.TextField(_("content"))
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateField(auto_now=True)
-    post = models.ForeignKey(Posts, on_delete=models.CASCADE)
+    post = models.ForeignKey(Posts, on_delete=models.CASCADE, null=True)
     author = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
 
     objects = models.Manager()
@@ -45,12 +44,12 @@ class Comments(models.Model):
         verbose_name = "댓글"
 
     def __str__(self):
-        return self.user.username
+        return self.author.username
 
 
 class PostLikes(models.Model):
     post = models.ForeignKey(Posts, on_delete=models.CASCADE)
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     objects = models.Manager()
 
@@ -63,7 +62,7 @@ class PostLikes(models.Model):
 
 class CommentLikes(models.Model):
     comment = models.ForeignKey(Comments, on_delete=models.CASCADE)
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     objects = models.Manager()
 
