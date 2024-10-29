@@ -8,7 +8,17 @@ class PostSerializer(serializers.ModelSerializer):
     class Meta:
         model = Posts
         fields = ['id', 'author', 'title', 'content', 'created_at', 'updated_at']
-        read_only_fields = ['id', 'author', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def create(self, validated_data):
+        print(validated_data)
+        instance = Posts.objects.create(
+            author=validated_data['author'],
+            title=validated_data['title'],
+            content=validated_data['content'],
+        )
+
+        return instance
 
 
 class CommentSerializer(serializers.ModelSerializer):

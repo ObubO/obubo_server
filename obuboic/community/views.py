@@ -29,12 +29,14 @@ class PostView(APIView):
             return response.HTTP_400
 
         try:
-            serializer = PostSerializer(data=request.data)              # 요청 데이터 serialize
+            request_data = request.POST.copy()                      # request.data를 가공하기 위한 복사본 생성
+            request_data['author'] = user.pk                        # request.data에 헤더로 넘어온 회원 데이터 추가
 
-            if serializer.is_valid():                                   # 요청 데이터 유효성 검사
-                post = serializer.create(serializer.validated_data)     # post 인스턴스 생성
-                post.author = user
-                post.save()
+            serializer = PostSerializer(data=request_data)          # 요청 데이터 serialize
+
+            if serializer.is_valid():                               # 요청 데이터 유효성 검사
+                serializer.create(serializer.validated_data)        # post 인스턴스 생성
+
                 return response.HTTP_200
             else:
                 return response.http_400(serializer.errors)
