@@ -2,9 +2,10 @@ from rest_framework.views import APIView
 
 from django.shortcuts import get_object_or_404
 from django.core.paginator import Paginator
-from .serializers import PostSerializer, CommentSerializer
+from .serializers import PostSerializer, CommentSerializer, PostLikeSerializer, CommentLikeSerializer
 from common import response
-from accounts.views import jwt_decode_handler
+from accounts.jwt_handler import decode_token
+from accounts.models import User
 from .models import Posts, Comments
 
 
@@ -21,28 +22,24 @@ class PostView(APIView):
         return response.http_200(serializer.data)
 
     def post(self, request):
-        access_token = request.headers.get('Authorization', None)       # 토큰 조회
-        jwt_decode_data = jwt_decode_handler(access_token)              # 토큰 decoding
-        jwt_is_valid, user = jwt_decode_data[0], jwt_decode_data[1]     # 회원 정보 조회
+        access_token = request.headers.get('Authorization', None)  # 토큰 조회
 
-        if not jwt_is_valid:
-            return response.HTTP_400
-
+        # 토큰 decoding
         try:
-            request_data = request.POST.copy()                      # request.data를 가공하기 위한 복사본 생성
-            request_data['author'] = user.pk                        # request.data에 헤더로 넘어온 회원 데이터 추가
+            payload = decode_token(access_token)  # 토큰 decoding
+            user = get_object_or_404(User, pk=payload.get('user_id'))
+        except Exception as e:
+            return response.http_400(str(e))
 
-            serializer = PostSerializer(data=request_data)          # 요청 데이터 serialize
+        request_data = request.POST.copy()                      # request.data를 가공하기 위한 복사본 생성
+        request_data['author'] = user.pk                        # request.data에 헤더로 넘어온 회원 데이터 추가
 
-            if serializer.is_valid():                               # 요청 데이터 유효성 검사
-                serializer.create(serializer.validated_data)        # post 인스턴스 생성
+        serializer = PostSerializer(data=request_data)          # 요청 데이터 serialize
 
-                return response.HTTP_200
-            else:
-                return response.http_400(serializer.errors)
+        if serializer.is_valid(raise_exception=True):           # 요청 데이터 유효성 검사
+            serializer.save()                                   # post 인스턴스 생성
 
-        except:
-            return response.http_500("서버 에러")
+            return response.HTTP_200
 
 
 class PostDetailView(APIView):
@@ -77,29 +74,24 @@ class PostDetailView(APIView):
 
 class CommentView(APIView):
     def post(self, request):
-        access_token = request.headers.get('Authorization', None)       # 토큰 조회
-        jwt_decode_data = jwt_decode_handler(access_token)              # 토큰 decoding / jwt_decode_handler의 return 값을 user.pk로 주면 코드 최적화 가능
-        jwt_is_valid, user = jwt_decode_data[0], jwt_decode_data[1]     # 회원 정보 조회
+        access_token = request.headers.get('Authorization', None)  # 토큰 조회
 
-        if not jwt_is_valid:                                            # 토큰 유효성 검사
-            return response.HTTP_400
-
+        # 토큰 decoding
         try:
-            request_data = request.POST.copy()                      # request.data를 가공하기 위한 복사본 생성
-            request_data['author'] = user.pk                        # request.data에 헤더로 넘어온 회원 데이터 추가
+            payload = decode_token(access_token)              # 토큰 decoding
+            user = get_object_or_404(User, pk=payload.get('user_id'))
+        except Exception as e:
+            return response.http_400(str(e))
 
-            serializer = CommentSerializer(data=request_data)       # 요청 데이터 serialize
+        request_data = request.POST.copy()                      # request.data를 가공하기 위한 복사본 생성
+        request_data['author'] = user.pk                        # request.data에 헤더로 넘어온 회원 데이터 추가
 
-            if serializer.is_valid():                               # 요청 데이터 유효성 검사
-                serializer.create(serializer.validated_data)        # comment 인스턴스 생성
+        serializer = CommentSerializer(data=request_data)       # 요청 데이터 serialize
 
-                return response.HTTP_200
+        if serializer.is_valid(raise_exception=True):           # 요청 데이터 유효성 검사
+            serializer.save()                                   # comment 인스턴스 생성
 
-            else:
-                return response.HTTP_400
-
-        except:
-            return response.HTTP_400
+            return response.HTTP_200
 
 
 class CommentDetailView(APIView):
