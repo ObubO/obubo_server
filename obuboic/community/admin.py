@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Posts, Comments
+from .models import Posts, Comments, PostLikes, CommentLikes
 
 
 # Register your models here.
@@ -24,5 +24,21 @@ class CommentsAdmin(admin.ModelAdmin):
     ordering = ('-created_at',)
 
 
+class PostLikesAdmin(admin.ModelAdmin):
+    fields = ['id', 'user', 'post']
+    list_display = ['id', 'post', 'user']
+
+    search_fiedls = ('user', 'post')
+
+
+class CommentLikesAdmin(admin.ModelAdmin):
+    fields = ['id', 'user', 'comment']
+    list_display = ['id', 'comment', 'user']
+
+    search_fiedls = ('user', )
+
+
 admin.site.register(Posts, PostsAdmin)
 admin.site.register(Comments, CommentsAdmin)
+admin.site.register(PostLikes, PostLikesAdmin)
+admin.site.register(CommentLikes, CommentLikesAdmin)

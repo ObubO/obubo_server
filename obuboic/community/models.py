@@ -44,7 +44,7 @@ class Comments(models.Model):
         verbose_name = "댓글"
 
     def __str__(self):
-        return self.author.username
+        return self.content
 
 
 class PostLikes(models.Model):

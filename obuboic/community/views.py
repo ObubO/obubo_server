@@ -116,3 +116,49 @@ class CommentDetailView(APIView):
 
         return response.HTTP_200
 
+
+class PostLikeView(APIView):
+    def post(self, request, post_id):
+        access_token = request.headers.get('Authorization', None)  # 토큰 조회
+
+        # 토큰 decoding
+        try:
+            payload = decode_token(access_token)  # 토큰 decoding
+            user = get_object_or_404(User, pk=payload.get('user_id'))
+        except Exception as e:
+            return response.http_400(str(e))
+
+        request_data = request.POST.copy()      # request.data를 가공하기 위한 복사본 생성
+        request_data['user'] = user.pk          # request.data에 헤더로 넘어온 회원 데이터 추가
+        request_data['post'] = post_id
+
+        serializer = PostLikeSerializer(data=request_data)  # 요청 데이터 serialize
+
+        if serializer.is_valid(raise_exception=True):     # 요청 데이터 유효성 검사
+            serializer.save()  # post 인스턴스 생성
+
+            return response.HTTP_200
+
+
+class CommentLikeView(APIView):
+    def post(self, request, comment_id):
+        access_token = request.headers.get('Authorization', None)  # 토큰 조회
+
+        # 토큰 decoding
+        try:
+            payload = decode_token(access_token)  # 토큰 decoding
+            user = get_object_or_404(User, pk=payload.get('user_id'))
+        except Exception as e:
+            return response.http_400(str(e))
+
+        request_data = request.POST.copy()      # request.data를 가공하기 위한 복사본 생성
+        request_data['user'] = user.pk          # request.data에 헤더로 넘어온 회원 데이터 추가
+        request_data['comment'] = comment_id
+
+        serializer = CommentLikeSerializer(data=request_data)  # 요청 데이터 serialize
+
+        if serializer.is_valid(raise_exception=True):     # 요청 데이터 유효성 검사
+            serializer.save()                             # post 인스턴스 생성
+
+            return response.HTTP_200
+

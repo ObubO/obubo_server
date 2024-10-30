@@ -20,7 +20,7 @@ class CommentSerializer(serializers.ModelSerializer):
 
 
 class PostSerializer(serializers.ModelSerializer):
-    comments = CommentSerializer(many=True, source='comments_set')
+    comments = CommentSerializer(many=True, source='comments_set', default=[])
 
     class Meta:
         model = Posts
@@ -37,3 +37,30 @@ class PostSerializer(serializers.ModelSerializer):
         return instance
 
 
+class PostLikeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PostLikes
+        fields = ['id', 'user', 'post']
+
+    def create(self, validated_data):
+        instance = PostLikes.objects.create(
+            user=validated_data['user'],
+            post=validated_data['post'],
+        )
+
+        return instance
+
+
+class CommentLikeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CommentLikes
+        fields = ['id', 'user', 'comment']
+
+    def create(self, validated_data):
+        print(validated_data)
+        instance = CommentLikes.objects.create(
+            user=validated_data['user'],
+            comment=validated_data['comment'],
+        )
+
+        return instance
