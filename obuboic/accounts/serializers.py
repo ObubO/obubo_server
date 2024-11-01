@@ -1,5 +1,5 @@
 from datetime import datetime
-
+import random
 from rest_framework import serializers
 from .models import UserType, User, Member, Terms, UserTerms, AuthTable
 from django.shortcuts import get_object_or_404
@@ -155,5 +155,63 @@ class SignUpSerializer(serializers.ModelSerializer):
                 is_consent=validated_terms,
                 consent_date=datetime.now(),
             )
-        return None
+        return member
+
+
+class KakaoSignUpSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(required=True)
+    nickname = serializers.CharField(required=True)
+    terms1 = serializers.BooleanField(required=True)
+    terms2 = serializers.BooleanField(required=True)
+    terms3 = serializers.BooleanField(required=True)
+    terms4 = serializers.BooleanField(required=True)
+
+    class Meta:
+        model = User
+        fields = ['username', 'password', 'name', 'nickname',
+                  'terms1', 'terms2', 'terms3', 'terms4', ]
+
+    def create(self, validated_data):
+
+        # 회원 관리(User) 인스턴스 생성
+        user_data = {
+            'username': validated_data['username'],
+            'password': validated_data['password'],
+        }
+        user_serializer = UserSerializer(data=user_data)
+        user_serializer.is_valid(raise_exception=True)
+        user = user_serializer.create(user_serializer.validated_data)
+
+        # 회원 정보(Member) 인스턴스 생성
+        member_data = {
+            'name': validated_data['name'],
+            'nickname': validated_data['nickname'],
+            'gender': None,
+            'birth': None,
+            'phone': None,
+            'email': None,
+        }
+
+        member_serializer = MemberSerializer(data=member_data)
+        member_serializer.is_valid(raise_exception=True)
+        member = member_serializer.create(member_serializer.validated_data)
+        member.user = user
+
+        type_code = 1
+        member.user_type = get_object_or_404(UserType, id=type_code)
+        member.save()
+
+        # 약관동의 인스턴스 생성
+        terms_list = Terms.objects.all()
+        for terms in terms_list:
+            terms_name = 'terms' + str(terms.id)
+            validated_terms = validated_data[terms_name]
+            UserTerms.objects.create(
+                user=user,
+                terms=get_object_or_404(Terms, id=terms.id),
+                is_consent=validated_terms,
+                consent_date=datetime.now(),
+            )
+
+        return user
 

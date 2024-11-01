@@ -399,3 +399,59 @@ class FindUserAllId(APIView):
         result = response.make_result2("id", username, "date", formatted_date)
 
         return response.http_200(result)
+
+
+class KakaoSignUp(APIView):
+    def get(self, request):
+        authorization_code = request.GET.get('code', None)
+        return response.http_200(authorization_code)
+
+    def post(self, request):
+        try:
+            authorization_code = request.data.get('code')               # 인가코드 조회
+            access_token = kakao.get_access_token(authorization_code)   # 토큰 요청
+            username = kakao.get_user_id(access_token)                  # 카카오 계정 코드
+            name = kakao.get_user_nickname(access_token)                # 카카오 닉네임
+
+            request_data = request.POST.copy()
+            request_data['username'] = username
+            request_data['password'] = username
+            request_data['name'] = name
+
+            serializer = KakaoSignUpSerializer(data=request_data)
+
+            if serializer.is_valid(raise_exception=True):
+                serializer.save()
+
+                return response.HTTP_200
+
+        except Exception as e:
+            return response.http_500(str(e))
+
+
+class KakaoLogin(APIView):
+    def post(self, request):
+        authorization_code = request.data.get('code', None)           # 인가코드 추출
+        access_token = kakao.get_access_token(authorization_code)     # 토큰 요청
+        username = kakao.get_user_id(access_token)                    # 카카오 계정 코드
+
+        user_exist = User.objects.filter(username=username).exists()
+        user = get_object_or_404(User, username=username)
+
+        if user_exist:
+            # JWT 토큰 발급
+            token = TokenObtainPairSerializer.get_token(user)
+            refresh_token = str(token)
+            access_token = str(token.access_token)
+
+            # 해당 회원의 Refresh Token 저장
+            user.refresh_token = refresh_token
+            user.last_login = datetime.now()
+            user.save()
+
+            result = {"token": {"access": access_token, "refresh": refresh_token}}
+            return response.http_200(result)
+        else:
+            return response.http_400("회원정보가 올바르지 않습니다.")
+
+

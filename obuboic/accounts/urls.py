@@ -9,6 +9,8 @@ urlpatterns = [
     path('login', views.LoginView.as_view()),
     path('logout', views.LogoutView.as_view()),
     path('withdrawal', views.WithdrawalView.as_view()),
+    path('kakao/signup', views.KakaoSignUp.as_view()),
+    path('kakao/login', views.KakaoLogin.as_view()),
 
     path('auth/request/phone', views.AuthPhone.as_view()),
     path('auth/request/name', views.AuthUserWithName.as_view()),
