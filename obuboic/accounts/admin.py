@@ -4,7 +4,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 from django.contrib.auth.forms import UserChangeForm, UserCreationForm
 
-from .models import User, Member, UserType, Terms, UserTerms
+from .models import User, Member, MemberType, Terms, UserTerms
 
 
 # Register your models here.
@@ -34,17 +34,17 @@ class UserAdmin(BaseUserAdmin):
 
 
 class MemberAdmin(admin.ModelAdmin):
-    fields = ['user', 'name', 'nickname', 'gender', 'phone', 'birth', 'email', 'user_type', ]
-    list_display = ('user', 'name', 'user_type', 'is_active')
+    fields = ['user', 'name', 'nickname', 'gender', 'phone', 'birth', 'email', 'member_type', ]
+    list_display = ('user', 'name', 'member_type', 'is_active')
 
     def is_active(self, obj):
         return obj.user.is_active
 
-    search_fields = ('name', 'user_type')
+    search_fields = ('name', 'member_type')
     ordering = ('name',)
 
 
-class UserTypeAdmin(admin.ModelAdmin):
+class MemberTypeAdmin(admin.ModelAdmin):
     fields = ['type_name', ]
     list_display = ('type_name', )
 
@@ -71,7 +71,7 @@ class UserTermsAdmin(admin.ModelAdmin):
 
 admin.site.register(User, UserAdmin)
 admin.site.register(Member, MemberAdmin)
-admin.site.register(UserType, UserTypeAdmin)
+admin.site.register(MemberType, MemberTypeAdmin)
 admin.site.register(Terms, TermsAdmin)
 admin.site.register(UserTerms, UserTermsAdmin)
 admin.site.unregister(Group)

@@ -61,6 +61,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     is_active = models.BooleanField(_("active"), default=True)
     is_admin = models.BooleanField(default=False)
+    is_social = models.BooleanField(default=False)
 
     objects = UserManger()
 
@@ -78,7 +79,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         return self.is_admin
 
 
-class UserType(models.Model):
+class MemberType(models.Model):
     type_name = models.CharField(_("type_name"), max_length=10)
 
     objects = models.Manager()
@@ -91,22 +92,15 @@ class UserType(models.Model):
 
 
 class Member(models.Model):
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-    )
     name = models.CharField(_("name"), max_length=10, validators=[validate_name], null=True, blank=True)
     nickname = models.CharField(_("nickname"), max_length=20, unique=True, validators=[validate_nickname], null=True, blank=True)
     gender = models.CharField(_("gender"), max_length=1, choices=GENDER, null=True, blank=True,)
     birth = models.DateField(_("birth"), null=True, blank=True)
     phone = models.CharField(_("phone"), max_length=11, unique=True, validators=[validate_phone], null=True, blank=True)
     email = models.EmailField(_("email"), max_length=50, unique=True, null=True, blank=True)
-    user_type = models.ForeignKey(
-        UserType,
-        on_delete=models.PROTECT,
-        blank=True,
-        null=True,
-    )
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='member')
+    member_type = models.OneToOneField(MemberType, on_delete=models.PROTECT, blank=True, null=True, default=None)
 
     objects = models.Manager()
 
@@ -154,7 +148,7 @@ class UserTerms(models.Model):
         Terms,
         on_delete=models.CASCADE,
     )
-    is_consent = models.CharField(_("is_consent"),max_length=5, choices=CONSENT)
+    is_consent = models.CharField(_("is_consent"), max_length=5, choices=CONSENT)
     consent_date = models.DateField(_("consent_date"), auto_now_add=True)
 
     objects = models.Manager()

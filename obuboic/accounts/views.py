@@ -56,17 +56,14 @@ class UserCreateView(APIView):
     # 회원가입
     def post(self, request):
         try:
-            print(request.data)
             serializer = SignUpSerializer(data=request.data)
 
-            if serializer.is_valid():
-                serializer.create(serializer.validated_data)
+            if serializer.is_valid(raise_exception=True):
+                serializer.save()
                 return response.HTTP_200
-            else:
-                return response.http_400(serializer.errors)
 
-        except:
-            return response.http_500("서버 확인 필요")
+        except Exception as e:
+            return response.http_500(str(e))
 
 
 # 닉네임 중복 확인

@@ -1,13 +1,13 @@
 from datetime import datetime
-import random
+
 from rest_framework import serializers
-from .models import UserType, User, Member, Terms, UserTerms, AuthTable
+from .models import MemberType, User, Member, Terms, UserTerms, AuthTable
 from django.shortcuts import get_object_or_404
 
 
-class UserTypeSerializer(serializers.ModelSerializer):
+class MemberTypeSerializer(serializers.ModelSerializer):
     class Meta:
-        model = UserType
+        model = MemberType
         fields = '__all__'
 
 
@@ -29,12 +29,16 @@ class MemberSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Member
-        fields = ['name', 'nickname', 'gender', 'birth', 'phone', 'email', 'user_type']
+        fields = ['name', 'nickname', 'gender', 'birth', 'phone', 'email']
 
-    def create(self, validated_data):
+    def create(self, validated_data, user=None, member_type=None):
+        if user is None:
+            raise ValueError("User instance must be provided")
         validated_email = self.get_validated_email(validated_data["email"])
 
         member = Member(
+            user=user,
+            member_type=member_type,
             name=validated_data["name"],
             nickname=validated_data["nickname"],
             gender=validated_data["gender"],
@@ -115,15 +119,21 @@ class SignUpSerializer(serializers.ModelSerializer):
                   'terms1', 'terms2', 'terms3', 'terms4', ]
 
     def create(self, validated_data):
+        user = self._create_user(validated_data)
+        member = self._create_member(user, validated_data)
+        self._create_user_terms(user, validated_data)
+        print(member)
+        return member
 
-        # 회원 관리(User) 인스턴스 생성
-        user_data = {
-            'username': validated_data['username'],
-            'password': validated_data['password'],
-        }
+    def _create_user(self, validated_data):
+        user_data = {'username': validated_data['username'], 'password': validated_data['password']}
         user_serializer = UserSerializer(data=user_data)
         user_serializer.is_valid(raise_exception=True)
-        user = user_serializer.create(user_serializer.validated_data)
+        return user_serializer.save()
+
+    def _create_member(self, user, validated_data):
+        type_code = validated_data['typeNo']
+        member_type = get_object_or_404(MemberType, id=type_code)
 
         # 회원 정보(Member) 인스턴스 생성
         member_data = {
@@ -134,20 +144,19 @@ class SignUpSerializer(serializers.ModelSerializer):
             'phone': validated_data["phone"],
             'email': validated_data["email"],
         }
+
         member_serializer = MemberSerializer(data=member_data)
-        member_serializer.is_valid(raise_exception=True)
-        member = member_serializer.create(member_serializer.validated_data)
-        member.user = user
 
-        type_code = validated_data['typeNo']
-        member.user_type = get_object_or_404(UserType, id=type_code)
-        member.save()
+        if member_serializer.is_valid(raise_exception=True):
+            member = member_serializer.create(validated_data, user, member_type)
+            member.save()
+            return member
 
+    def _create_user_terms(self, user, validated_data):
         # 약관동의 인스턴스 생성
         terms_list = Terms.objects.all()
         for terms in terms_list:
             terms_name = 'terms' + str(terms.id)
-            print(terms_name)
             validated_terms = validated_data[terms_name]
             UserTerms.objects.create(
                 user=user,
@@ -155,7 +164,6 @@ class SignUpSerializer(serializers.ModelSerializer):
                 is_consent=validated_terms,
                 consent_date=datetime.now(),
             )
-        return member
 
 
 class KakaoSignUpSerializer(serializers.ModelSerializer):
@@ -177,6 +185,7 @@ class KakaoSignUpSerializer(serializers.ModelSerializer):
         user_data = {
             'username': validated_data['username'],
             'password': validated_data['password'],
+            'is_social': True,
         }
         user_serializer = UserSerializer(data=user_data)
         user_serializer.is_valid(raise_exception=True)
@@ -198,7 +207,7 @@ class KakaoSignUpSerializer(serializers.ModelSerializer):
         member.user = user
 
         type_code = 1
-        member.user_type = get_object_or_404(UserType, id=type_code)
+        member.member_type = get_object_or_404(MemberType, id=type_code)
         member.save()
 
         # 약관동의 인스턴스 생성
