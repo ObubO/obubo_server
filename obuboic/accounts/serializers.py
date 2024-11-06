@@ -3,6 +3,19 @@ from datetime import datetime
 from rest_framework import serializers
 from .models import MemberType, User, Member, Terms, UserTerms, AuthTable
 from django.shortcuts import get_object_or_404
+from community.models import Posts, Comments
+
+
+class UserPostSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Posts
+        fields = ['id', 'title']
+
+
+class UserCommentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comments
+        fields = ['id', 'content']
 
 
 class MemberTypeSerializer(serializers.ModelSerializer):
@@ -12,6 +25,9 @@ class MemberTypeSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+    posts_set = UserPostSerializer(many=True, read_only=True, default=[])
+    comments_set = UserCommentSerializer(many=True, read_only=True, default=[])
+
     class Meta:
         model = User
         fields = '__all__'
@@ -26,10 +42,11 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class MemberSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
 
     class Meta:
         model = Member
-        fields = ['name', 'nickname', 'gender', 'birth', 'phone', 'email']
+        fields = ['name', 'nickname', 'gender', 'birth', 'phone', 'email', 'user']
 
     def create(self, validated_data, user=None, member_type=None):
         if user is None:
