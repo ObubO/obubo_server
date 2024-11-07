@@ -3,19 +3,7 @@ from datetime import datetime
 from rest_framework import serializers
 from .models import MemberType, User, Member, Terms, UserTerms, AuthTable
 from django.shortcuts import get_object_or_404
-from community.models import Posts, Comments
-
-
-class UserPostSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Posts
-        fields = ['id', 'title']
-
-
-class UserCommentSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Comments
-        fields = ['id', 'content']
+from community.serializers import PostSerializer, CommentSerializer
 
 
 class MemberTypeSerializer(serializers.ModelSerializer):
@@ -25,8 +13,8 @@ class MemberTypeSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    posts_set = UserPostSerializer(many=True, read_only=True, default=[])
-    comments_set = UserCommentSerializer(many=True, read_only=True, default=[])
+    posts = PostSerializer(many=True, read_only=True, default=[])
+    comments_set = CommentSerializer(many=True, read_only=True, default=[])
 
     class Meta:
         model = User
