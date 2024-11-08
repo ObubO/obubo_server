@@ -2,11 +2,11 @@ from rest_framework.views import APIView
 
 from django.shortcuts import get_object_or_404
 from django.core.paginator import Paginator
-from .serializers import PostSerializer, CommentSerializer, PostLikeSerializer, CommentLikeSerializer
+from .serializers import PostSerializer, CommentSerializer
 from common import response
 from accounts.jwt_handler import decode_token
 from accounts.models import User
-from .models import Posts, Comments
+from .models import Posts, Comments, PostLike, CommentLike
 
 
 class PostView(APIView):
@@ -120,6 +120,7 @@ class CommentDetailView(APIView):
 class PostLikeView(APIView):
     def post(self, request, post_id):
         access_token = request.headers.get('Authorization', None)  # 토큰 조회
+        post = get_object_or_404(Posts, pk=post_id)
 
         # 토큰 decoding
         try:
@@ -128,21 +129,20 @@ class PostLikeView(APIView):
         except Exception as e:
             return response.http_400(str(e))
 
-        request_data = request.POST.copy()      # request.data를 가공하기 위한 복사본 생성
-        request_data['user'] = user.pk          # request.data에 헤더로 넘어온 회원 데이터 추가
-        request_data['post'] = post_id
+        post_like, created = PostLike.objects.get_or_create(user=user, post=post)
 
-        serializer = PostLikeSerializer(data=request_data)  # 요청 데이터 serialize
-
-        if serializer.is_valid(raise_exception=True):     # 요청 데이터 유효성 검사
-            serializer.save()  # post 인스턴스 생성
-
-            return response.HTTP_200
+        if not created:
+            post_like.delete()
+            return response.http_200("좋아요 삭제")
+        else:
+            post.like.add(user)
+            return response.http_200("좋아요 추가")
 
 
 class CommentLikeView(APIView):
     def post(self, request, comment_id):
         access_token = request.headers.get('Authorization', None)  # 토큰 조회
+        comment = get_object_or_404(Comments, pk=comment_id)
 
         # 토큰 decoding
         try:
@@ -151,14 +151,12 @@ class CommentLikeView(APIView):
         except Exception as e:
             return response.http_400(str(e))
 
-        request_data = request.POST.copy()      # request.data를 가공하기 위한 복사본 생성
-        request_data['user'] = user.pk          # request.data에 헤더로 넘어온 회원 데이터 추가
-        request_data['comment'] = comment_id
+        comment_like, created = CommentLike.objects.get_or_create(user=user, comment=comment)
 
-        serializer = CommentLikeSerializer(data=request_data)  # 요청 데이터 serialize
-
-        if serializer.is_valid(raise_exception=True):     # 요청 데이터 유효성 검사
-            serializer.save()                             # post 인스턴스 생성
-
-            return response.HTTP_200
+        if not created:
+            comment_like.delete()
+            return response.http_200("좋아요 삭제")
+        else:
+            comment.like.add(user)
+            return response.http_200("좋아요 추가")
 

@@ -1,4 +1,3 @@
-from datetime import date
 from django.db import models
 from django.contrib.auth.models import PermissionsMixin
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
@@ -100,7 +99,7 @@ class Member(models.Model):
     email = models.EmailField(_("email"), max_length=50, unique=True, null=True, blank=True)
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='member')
-    member_type = models.OneToOneField(MemberType, on_delete=models.PROTECT, blank=True, null=True, default=None)
+    member_type = models.ForeignKey(MemberType, on_delete=models.PROTECT, blank=True, null=True, default=None)
 
     objects = models.Manager()
 

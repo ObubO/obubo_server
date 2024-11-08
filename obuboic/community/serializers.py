@@ -1,12 +1,14 @@
 from datetime import datetime
 from rest_framework import serializers
-from .models import Posts, Comments, PostLikes, CommentLikes
+from .models import Posts, Comments, PostLike, CommentLike
 
 
 class CommentSerializer(serializers.ModelSerializer):
+    likes_count = serializers.IntegerField(source='like.count', read_only=True)
+
     class Meta:
         model = Comments
-        fields = ['id', 'post', 'author', 'content', 'created_at']
+        fields = ['id', 'post', 'author', 'content', 'created_at', 'likes_count']
         read_only_fields = ['id', 'created_at']
 
     def create(self, validated_data):
@@ -19,12 +21,25 @@ class CommentSerializer(serializers.ModelSerializer):
         return instance
 
 
+class CommentUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comments
+        fields = ['id', 'content']
+
+
+class CommentPostSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comments
+        fields = ['id', 'author', 'content', 'created_at']
+
+
 class PostSerializer(serializers.ModelSerializer):
-    comments = CommentSerializer(many=True, source='comments_set', default=[])
+    comments = CommentPostSerializer(many=True, source='comments_set', default=[])
+    likes_count = serializers.IntegerField(source='like.count', read_only=True)
 
     class Meta:
         model = Posts
-        fields = ['id', 'author', 'title', 'content', 'created_at', 'updated_at', 'comments']
+        fields = ['id', 'author', 'title', 'content', 'created_at', 'updated_at', 'comments', 'likes_count']
         read_only_fields = ['id', 'created_at', 'updated_at']
 
     def create(self, validated_data):
@@ -37,30 +52,19 @@ class PostSerializer(serializers.ModelSerializer):
         return instance
 
 
-class PostLikeSerializer(serializers.ModelSerializer):
+class PostUserSerializer(serializers.ModelSerializer):
     class Meta:
-        model = PostLikes
-        fields = ['id', 'user', 'post']
-
-    def create(self, validated_data):
-        instance = PostLikes.objects.create(
-            user=validated_data['user'],
-            post=validated_data['post'],
-        )
-
-        return instance
+        model = Posts
+        fields = ['id', 'title']
 
 
-class CommentLikeSerializer(serializers.ModelSerializer):
+class PostLikeUserSerializer(serializers.ModelSerializer):
     class Meta:
-        model = CommentLikes
-        fields = ['id', 'user', 'comment']
+        model = PostLike
+        fields = ['post']
 
-    def create(self, validated_data):
-        print(validated_data)
-        instance = CommentLikes.objects.create(
-            user=validated_data['user'],
-            comment=validated_data['comment'],
-        )
 
-        return instance
+class CommentLikeUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CommentLike
+        fields = ['comment']
