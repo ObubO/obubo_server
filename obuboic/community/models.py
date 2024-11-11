@@ -15,7 +15,7 @@ class Category(models.Model):
         return self.category_name
 
 
-class Posts(models.Model):
+class Post(models.Model):
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True)
     author = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="posts")
     title = models.CharField(_("title"), max_length=100)
@@ -33,9 +33,9 @@ class Posts(models.Model):
         return self.title
 
 
-class Comments(models.Model):
+class Comment(models.Model):
     author = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="comments")
-    post = models.ForeignKey(Posts, on_delete=models.CASCADE, null=True)
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, null=True, related_name="comments")
     content = models.TextField(_("content"))
     like = models.ManyToManyField(User, through="CommentLike", through_fields=("comment", "user"), related_name="like_comments")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -50,7 +50,7 @@ class Comments(models.Model):
 
 
 class PostLike(models.Model):
-    post = models.ForeignKey(Posts, on_delete=models.CASCADE)
+    post = models.ForeignKey(Post, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     objects = models.Manager()
@@ -61,7 +61,7 @@ class PostLike(models.Model):
 
 
 class CommentLike(models.Model):
-    comment = models.ForeignKey(Comments, on_delete=models.CASCADE)
+    comment = models.ForeignKey(Comment, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     objects = models.Manager()

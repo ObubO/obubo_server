@@ -6,12 +6,12 @@ from .serializers import PostSerializer, CommentSerializer
 from common import response
 from accounts.jwt_handler import decode_token
 from accounts.models import User
-from .models import Posts, Comments, PostLike, CommentLike
+from .models import Post, Comment, PostLike, CommentLike
 
 
 class PostView(APIView):
     def get(self, request):
-        post_list = Posts.objects.filter().order_by('-created_at')  # 게시글 최신순 조회
+        post_list = Post.objects.filter().order_by('-created_at')  # 게시글 최신순 조회
 
         paginator = Paginator(post_list, 10)                        # Paginator 설정
         page_number = request.GET.get('page')
@@ -44,7 +44,7 @@ class PostView(APIView):
 
 class PostDetailView(APIView):
     def get(self, request, post_id):
-        instance = get_object_or_404(Posts, pk=post_id)     # 게시글 인스턴스 조회
+        instance = get_object_or_404(Post, pk=post_id)     # 게시글 인스턴스 조회
         serializer = PostSerializer(instance)               # 조회된 인스턴스 serialize
 
         return response.http_200(serializer.data)
@@ -53,7 +53,7 @@ class PostDetailView(APIView):
         serializer = PostSerializer(data=request.data)              # 요청 데이터 직렬화
 
         if serializer.is_valid():                                   # 요청 데이터 유효성 검사
-            instance = get_object_or_404(Posts, pk=post_id)         # post 인스턴스 조회
+            instance = get_object_or_404(Post, pk=post_id)         # post 인스턴스 조회
             serializer.update(instance, serializer.validated_data)  # 인스턴스 수정
 
             return response.HTTP_200
@@ -63,7 +63,7 @@ class PostDetailView(APIView):
 
     def delete(self, request, post_id):
         try:
-            instance = get_object_or_404(Posts, pk=post_id)  # post 인스턴스 조회
+            instance = get_object_or_404(Post, pk=post_id)  # post 인스턴스 조회
             instance.delete()                                # 인스턴스 삭제
 
             return response.HTTP_200
@@ -96,7 +96,7 @@ class CommentView(APIView):
 
 class CommentDetailView(APIView):
     def get(self, request, comment_id):
-        instance = get_object_or_404(Comments, pk=comment_id)       # 댓글 인스턴스 조회
+        instance = get_object_or_404(Comment, pk=comment_id)       # 댓글 인스턴스 조회
         serializer = CommentSerializer(instance)                    # 조회된 인스턴스 serialize
 
         return response.http_200(serializer.data)
@@ -105,13 +105,13 @@ class CommentDetailView(APIView):
         serializer = CommentSerializer(data=request.data)           # 요청 데이터 serialize
 
         if serializer.is_valid():                                   # 요청 데이터 유효성 검사
-            instance = get_object_or_404(Comments, pk=comment_id)   # comment 인스턴스 조회
+            instance = get_object_or_404(Comment, pk=comment_id)   # comment 인스턴스 조회
             serializer.update(instance, serializer.validated_data)  # 인스턴스 수정
 
             return response.HTTP_200
 
     def delete(self, request, comment_id):
-        instance = get_object_or_404(Comments, pk=comment_id)
+        instance = get_object_or_404(Comment, pk=comment_id)
         instance.delete()
 
         return response.HTTP_200
@@ -120,7 +120,7 @@ class CommentDetailView(APIView):
 class PostLikeView(APIView):
     def post(self, request, post_id):
         access_token = request.headers.get('Authorization', None)  # 토큰 조회
-        post = get_object_or_404(Posts, pk=post_id)
+        post = get_object_or_404(Post, pk=post_id)
 
         # 토큰 decoding
         try:
@@ -142,7 +142,7 @@ class PostLikeView(APIView):
 class CommentLikeView(APIView):
     def post(self, request, comment_id):
         access_token = request.headers.get('Authorization', None)  # 토큰 조회
-        comment = get_object_or_404(Comments, pk=comment_id)
+        comment = get_object_or_404(Comment, pk=comment_id)
 
         # 토큰 decoding
         try:
