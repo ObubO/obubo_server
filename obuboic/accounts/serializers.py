@@ -13,10 +13,6 @@ class MemberTypeSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    posts = PostUserSerializer(many=True, read_only=True, default=[])
-    comments = CommentUserSerializer(many=True, read_only=True, default=[])
-    like_posts = PostLikeUserSerializer(many=True, source='postlike_set', read_only=True, default=[])
-    like_comments = CommentLikeUserSerializer(many=True, source='commentlike_set', read_only=True, default=[])
 
     class Meta:
         model = User
@@ -31,8 +27,19 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
 
+class UserProfileSerializer(serializers.ModelSerializer):
+    posts = PostUserSerializer(many=True, read_only=True, default=[])
+    comments = CommentUserSerializer(many=True, read_only=True, default=[])
+    like_posts = PostLikeUserSerializer(many=True, source='postlike_set', read_only=True, default=[])
+    like_comments = CommentLikeUserSerializer(many=True, source='commentlike_set', read_only=True, default=[])
+
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'posts', 'comments', 'like_posts', 'like_comments']
+
+
 class MemberSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
+    user = UserProfileSerializer(read_only=True)
 
     class Meta:
         model = Member
@@ -260,5 +267,4 @@ class KakaoSignUpSerializer(serializers.ModelSerializer):
                 is_consent=validated_terms,
                 consent_date=datetime.now(),
             )
-
 

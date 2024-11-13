@@ -14,14 +14,12 @@ def validate_id(value):
 
 
 def validate_password(value):
-    None
-    """
     if not re.match(r'^(?=.*[a-zA-Z])(?=.*[!@#$%^*+=-])(?=.*[0-9]).{8,15}$', value):
         raise ValidationError(
             '8자 이상 20자 이하, 영어 또는 숫자로 구성',
             params={'value': value},
         )
-    """
+
 
 def validate_name(value):
     None

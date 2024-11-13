@@ -13,7 +13,7 @@ from .models import User, Member, AuthTable
 from .serializers import KakaoSignUpSerializer, CheckPasswordSerializer, MemberSerializer, CheckNicknameSerializer, CheckUserIdSerializer, AuthTablePhoneSerializer, AuthTableSerializer, SignUpSerializer
 from sms import message
 from common import response
-from .jwt_handler import decode_token
+from .jwt_handler import decode_token, decode_token_without_exp
 from .oauth import kakao
 
 SECRET_KEY = getattr(settings, 'SECRET_KEY', 'SECRET_KEY')
@@ -45,13 +45,11 @@ class UserCreateView(APIView):
             query_dict = QueryDict('username='+username)
             serializer = CheckUserIdSerializer(data=query_dict)
 
-            if serializer.is_valid():
+            if serializer.is_valid(raise_exception=True):
                 return response.HTTP_200
-            else:
-                return response.http_400(serializer.errors)
 
-        except:
-            return response.http_500("서버 확인 필요")
+        except Exception as e:
+            return response.http_400(str(e))
 
     # 회원가입
     def post(self, request):
@@ -60,10 +58,10 @@ class UserCreateView(APIView):
 
             if serializer.is_valid(raise_exception=True):
                 serializer.save()
-                return response.HTTP_200
+                return response.HTTP_201
 
         except Exception as e:
-            return response.http_500(str(e))
+            return response.http_400(str(e))
 
 
 # 닉네임 중복 확인
@@ -73,17 +71,15 @@ class CheckNickname(APIView):
             query_dict = QueryDict('nickname='+nickname)
             serializer = CheckNicknameSerializer(data=query_dict)
 
-            if serializer.is_valid():
+            if serializer.is_valid(raise_exception=True):
                 return response.HTTP_200
-            else:
-                return response.http_400(serializer.errors)
 
-        except:
-            return response.http_500("서버 확인 필요")
+        except Exception as e:
+            return response.http_400(str(e))
 
 
 # 계정 조회/수정 API
-class AuthView(APIView):
+class UserProfileView(APIView):
     def get(self, request):
         access_token = request.headers.get('Authorization', None)  # 토큰 조회
 
@@ -96,7 +92,7 @@ class AuthView(APIView):
 
         member = get_object_or_404(Member, user=user)
         member_serializer = MemberSerializer(instance=member)
-        result = {"user": member_serializer.data}
+        result = {"member": member_serializer.data}
 
         return response.http_200(result)
 
@@ -114,9 +110,12 @@ class AuthView(APIView):
 
         if serializer.is_valid(raise_exception=True):               # 요청 데이터 유효성 검사
             member = get_object_or_404(Member, user=user)
-            serializer.update(member, serializer.validated_data)    # 회원 인스턴스 수정
+            updated_member = serializer.update(member, serializer.validated_data)    # 회원 인스턴스 수정
 
-        return response.HTTP_200
+            member_serializer = MemberSerializer(instance=updated_member)
+            result = {"member": member_serializer.data}
+
+            return response.http_200(result)
 
 
 # 계정 로그인 API
@@ -125,9 +124,9 @@ class LoginView(APIView):
         try:
             # ID/PW 인증
             user = authenticate(username=request.data.get("username"), password=request.data.get("password"))
-            is_active = user.is_active
+
             # 인증 통과시(회원이 존재하는 경우)
-            if user is not None and is_active:
+            if user is not None:
                 # JWT 토큰 발급
                 token = TokenObtainPairSerializer.get_token(user)
                 refresh_token = str(token)
@@ -143,8 +142,8 @@ class LoginView(APIView):
             else:
                 return response.http_400("회원정보가 올바르지 않습니다.")
 
-        except:
-            return response.http_400("회원정보를 확인해주세요.")
+        except Exception as e:
+            return response.http_400(str(e))
 
 
 # 계정 로그아웃 API
@@ -154,13 +153,12 @@ class LogoutView(APIView):
 
         # JWT 인증 - 기간만료 무시
         try:
-            payload = jwt.decode(refresh, SECRET_KEY, algorithms=['HS256'], options={"verify_exp": False})
-        except jwt.exceptions.InvalidTokenError:
-            return response.http_400("유효하지 않은 토큰입니다.")
+            payload = decode_token_without_exp(refresh)
+        except Exception as e:
+            return response.http_400(str(e))
 
         # 사용자 조회
-        pk = payload.get('user_id')
-        user = get_object_or_404(User, pk=pk)
+        user = get_object_or_404(User, pk=payload.get('user_id'))
 
         # 해당 회원의 Refresh Token 삭제
         user.refresh_token = None
@@ -177,10 +175,10 @@ class WithdrawalView(APIView):
         # 토큰 decoding
         try:
             payload = decode_token(access_token)  # 토큰 decoding
-            user = get_object_or_404(User, pk=payload.get('user_id'))
         except Exception as e:
             return response.http_400(str(e))
 
+        user = get_object_or_404(User, pk=payload.get('user_id'))
         user.delete()
 
         return response.HTTP_200
@@ -216,8 +214,8 @@ class CustomTokenRefreshView(TokenRefreshView):
             return response.http_403("사용자가 삭제한 토큰입니다.")
 
 
-# -- 전화번호 인증  -- #
-class AuthPhone(APIView):
+# -- 인증번호 전송  -- #
+class AuthSMS(APIView):
     def post(self, request):
         # 데이터 유효성 검사
         serializer = AuthTablePhoneSerializer(data=request.data)
@@ -312,9 +310,9 @@ class AuthVerify(APIView):
             return response.http_400("인증번호를 확인해주세요.")
 
 
-# -- 비밀번호 확인 -- #
-class CheckPassword(APIView):
-    def post(self, request):
+class UserPasswordView(APIView):
+    # -- 비밀번호 확인 -- #
+    def get(self, request):
         access_token = request.headers.get('Authorization', None)  # 토큰 조회
         password = request.data['password']
 
@@ -331,34 +329,36 @@ class CheckPassword(APIView):
         else:
             return response.http_403("비밀번호가 일치하지 않습니다.")
 
-
-# -- 비밀번호 변경 -- #
-class ChangePasswordView(APIView):
-    def post(self, request):
-        serializer = CheckPasswordSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        new_password = serializer.validated_data['password']
-
-        # 인증(로그인) 회원 조회
-        access_token = request.headers.get('Authorization', None)  # 토큰 조회
-
+    # -- 비밀번호 변경 -- #
+    def put(self, request):
         try:
-            if access_token:
-                payload = decode_token(access_token)                        # 토큰 decoding
-                user = get_object_or_404(User, pk=payload.get('user_id'))
-            else:
-                # 비인증(비로그인) 회원 조회
-                username = request.data['username']
-                user = get_object_or_404(User, username=username)
-
-        except KeyError:
-                return response.http_400("username 필드는 필수 항목입니다.")
-
+            access_token = request.headers.get('Authorization', None)   # 토큰 조회
+            payload = decode_token(access_token)                        # 토큰 decoding
         except Exception as e:
-                return response.http_400(str(e))
+            return response.http_400(str(e))
 
-        user.set_password(new_password)
-        user.save()
+        user = get_object_or_404(User, pk=payload.get('user_id'))
+        serializer = CheckPasswordSerializer(data=request.data)
+
+        if serializer.is_valid(raise_exception=True):
+            new_password = serializer.validated_data['password']
+
+            user.set_password(new_password)
+            user.save()
+
+            return response.HTTP_200
+
+
+class PasswordSetView(APIView):
+    def put(self, request):
+        username = request.data['username']
+        user = get_object_or_404(User, username=username)
+
+        new_password = request.data['password']
+        serializer = CheckPasswordSerializer(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            user.set_password(new_password)
+            user.save()
 
         return response.HTTP_200
 
@@ -382,18 +382,11 @@ class FindUserPartId(APIView):
 
 
 # -- 아이디 찾기(전체) -- #
-class FindUserAllId(APIView):
-    def post(self, request):
+class FindId(APIView):
+    def get(self, request):
         phone = request.data['phone']
-
         member = get_object_or_404(Member, phone=phone)
-        username = member.user.username
-
-        str_date = str(member.user.created_at)
-        date = datetime.fromisoformat(str_date)
-        formatted_date = date.strftime('%Y-%m-%d')
-
-        result = response.make_result2("id", username, "date", formatted_date)
+        result = response.make_result2("id", member.user.username, "date", member.user.created_at)
 
         return response.http_200(result)
 
@@ -423,7 +416,7 @@ class KakaoSignUp(APIView):
                 return response.HTTP_200
 
         except Exception as e:
-            return response.http_500(str(e))
+            return response.http_400(str(e))
 
 
 class KakaoLogin(APIView):

@@ -15,8 +15,18 @@ def decode_token(token):
 
     # Token has expired
     except jwt.exceptions.ExpiredSignatureError:
-        raise Exception("expired_token")
+        raise Exception("This token is expired")
 
     # Invalid token
+    except jwt.exceptions.InvalidTokenError:
+        raise Exception("invalid_token")
+
+
+def decode_token_without_exp(token):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'], options={"verify_exp": False})
+
+        return payload
+
     except jwt.exceptions.InvalidTokenError:
         raise Exception("invalid_token")
