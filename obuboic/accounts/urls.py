@@ -19,9 +19,9 @@ urlpatterns = [
     path('users/profiles', views.UserProfileView.as_view()),        # 회원정보 조회 및 수정
     path('users/password', views.UserPasswordView.as_view()),       # 비밀번호 확인 및 변경
 
-    path('check/id/<str:username>', views.AuthUserWithId.as_view()),        # 아이디 is_exist 확인
+    path('check/id/<str:username>', views.CheckUserId.as_view()),        # 아이디 is_exist 확인
     path('check/name-phone', views.AuthUserWithName.as_view()),             # 이름-전화번호 일치 확인
-    path('check/id-phone', views.AuthUserWithId.as_view()),                 # 아이디-전화번호 일치 확인
+    path('check/id-phone', views.CheckUserId.as_view()),                 # 아이디-전화번호 일치 확인
 
     path('find/id', views.FindId.as_view()),                    # 아이디 찾기 GET
     path('change/password', views.PasswordSetView.as_view()),   # 비밀번호 찾기 GET

@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 
 from django.shortcuts import get_object_or_404
 from django.core.paginator import Paginator
-from .serializers import PostSerializer, CommentSerializer
+from .serializers import PostSerializer, CommentSerializer, PostListSerializer, PostDetailSerializer
 from common import response
 from accounts.jwt_handler import decode_token
 from accounts.models import User
@@ -11,15 +11,17 @@ from .models import Post, Comment, PostLike, CommentLike
 
 class PostView(APIView):
     def get(self, request):
+        page = request.data['page']
+        size = request.data['size']
+
         post_list = Post.objects.filter().order_by('-created_at')  # 게시글 최신순 조회
+        paginator = Paginator(post_list, size)                        # Paginator 설정
+        posts = paginator.get_page(page)
 
-        paginator = Paginator(post_list, 10)                        # Paginator 설정
-        page_number = request.GET.get('page')
-        posts = paginator.get_page(page_number)
+        serializer = PostListSerializer(posts, many=True)               # 게시글 리스트 serializer
+        result = {"posts": serializer.data}
 
-        serializer = PostSerializer(posts, many=True)               # 게시글 리스트 serializer
-
-        return response.http_200(serializer.data)
+        return response.http_200(result)
 
     def post(self, request):
         access_token = request.headers.get('Authorization', None)  # 토큰 조회
@@ -44,16 +46,17 @@ class PostView(APIView):
 
 class PostDetailView(APIView):
     def get(self, request, post_id):
-        instance = get_object_or_404(Post, pk=post_id)     # 게시글 인스턴스 조회
-        serializer = PostSerializer(instance)               # 조회된 인스턴스 serialize
+        instance = get_object_or_404(Post, pk=post_id)          # 게시글 인스턴스 조회
+        serializer = PostDetailSerializer(instance)             # 조회된 인스턴스 serialize
+        result = {"posts": serializer.data}
 
-        return response.http_200(serializer.data)
+        return response.http_200(result)
 
     def put(self, request, post_id):
         serializer = PostSerializer(data=request.data)              # 요청 데이터 직렬화
 
         if serializer.is_valid():                                   # 요청 데이터 유효성 검사
-            instance = get_object_or_404(Post, pk=post_id)         # post 인스턴스 조회
+            instance = get_object_or_404(Post, pk=post_id)          # post 인스턴스 조회
             serializer.update(instance, serializer.validated_data)  # 인스턴스 수정
 
             return response.HTTP_200

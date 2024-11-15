@@ -234,7 +234,7 @@ class AuthSMS(APIView):
 
 
 # -- 회원 아이디 인증 -- #
-class AuthUserWithId(APIView):
+class CheckUserId(APIView):
     def get(self, request, username):
         user_exist = User.objects.filter(username=username).exists()
 
@@ -405,7 +405,7 @@ class KakaoSignUp(APIView):
 
             request_data = request.POST.copy()
             request_data['username'] = username
-            request_data['password'] = username
+            request_data['password'] = username+"!@"
             request_data['name'] = name
 
             serializer = KakaoSignUpSerializer(data=request_data)
