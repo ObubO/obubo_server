@@ -12,17 +12,17 @@ urlpatterns = [
     path('kakao/signup', views.KakaoSignUp.as_view()),      # 간편(카카오) 회원가입
     path('kakao/login', views.KakaoLogin.as_view()),        # 간편(카카오) 로그인
 
-    path('auth/sms', views.AuthSMS.as_view()),                              # 인증번호 전송
-    path('auth/verify', views.AuthVerify.as_view()),                        # 인증번호 확인
-    path('auth/token/refresh', views.CustomTokenRefreshView.as_view()),     # access_token 재발급
+    path('token/refresh', views.CustomTokenRefreshView.as_view()),     # access_token 재발급
 
-    path('users/profiles', views.UserProfileView.as_view()),        # 회원정보 조회 및 수정
-    path('users/password', views.UserPasswordView.as_view()),       # 비밀번호 확인 및 변경
+    path('users/profiles', views.UserProfileView.as_view()),           # 회원정보 조회 및 수정
+    path('users/id', views.UsernameSetView.as_view()),                 # 아이디 조회
+    path('users/password', views.PasswordSetView.as_view()),           # 비밀번호 변경
+    path('users/password/check', views.PasswordSetView.as_view()),     # 비밀번호 검증
 
-    path('check/id/<str:username>', views.CheckUserId.as_view()),        # 아이디 is_exist 확인
-    path('check/name-phone', views.AuthUserWithName.as_view()),             # 이름-전화번호 일치 확인
-    path('check/id-phone', views.CheckUserId.as_view()),                 # 아이디-전화번호 일치 확인
+    path('auth/phone', views.AuthPhoneNumber.as_view()),        # 전화번호 인증
+    path('auth/name-phone', views.AuthUserName.as_view()),      # 이름 및 전화번호 인증
+    path('auth/id-phone', views.AuthUserId.as_view()),          # 아이디 및 전화번호 인증
 
-    path('find/id', views.FindId.as_view()),                    # 아이디 찾기 GET
-    path('change/password', views.PasswordSetView.as_view()),   # 비밀번호 찾기 GET
+    path('validate/code/<int:code>', views.AuthVerify.as_view()),   # 인증번호 확인
+
 ]
