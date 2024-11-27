@@ -7,6 +7,26 @@ GENDER = {
         ("W", "Woman"),
     }
 
+REGION = {
+    ("SEO", "서울특별시"),
+    ("SEJ", "세종특별자치시"),
+    ("BSN", "부산광역시"),
+    ("DGU", "대구광역시"),
+    ("ICN", "인천광역시"),
+    ("GJU", "광주광역시"),
+    ("DJN", "대전광역시"),
+    ("USN", "울산광역시"),
+    ("GNG", "경기도"),
+    ("GWN", "강원특별자치도"),
+    ("JBK", "전북특별자치도"),
+    ("JJU", "제주특별자치도"),
+    ("CBK", "충청북도"),
+    ("CNM", "충청남도"),
+    ("JNM", "전라남도"),
+    ("GBK", "경상북도"),
+    ("GNM", "경상남도"),
+}
+
 
 # Create your models here.
 class CareGradeDetail(models.Model):
@@ -19,6 +39,7 @@ class CareGradeDetail(models.Model):
     data = models.JSONField(_("data"))
     gender = models.CharField(_("gender"), max_length=1, choices=GENDER)
     age = models.IntegerField(_("age"))
+    region = models.CharField(_("region"), max_length=10, choices=REGION, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -46,6 +67,7 @@ class CareGradeSimple(models.Model):
     data = models.JSONField(_("data"))
     gender = models.CharField(_("gender"), max_length=1, choices=GENDER)
     age = models.IntegerField(_("age"))
+    region = models.CharField(_("region"), max_length=10, choices=REGION, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -58,6 +80,7 @@ class CareGradeEx(models.Model):
     data = models.JSONField(_("data"))
     gender = models.CharField(_("gender"), max_length=1, choices=GENDER)
     age = models.IntegerField(_("age"))
+    region = models.CharField(_("region"), max_length=10, choices=REGION, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
