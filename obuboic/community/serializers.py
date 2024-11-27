@@ -63,7 +63,7 @@ class PostSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post
-        fields = ['id', 'author', 'title', 'content', 'created_at', 'updated_at']
+        fields = ['id', 'author', 'title', 'content', 'views', 'created_at', 'updated_at']
         read_only_fields = ['id', 'created_at', 'updated_at']
 
     def create(self, validated_data):
@@ -95,7 +95,7 @@ class PostListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post
-        fields = ['id', 'title', 'nickname', 'created_at', 'comments_count', 'likes_count']
+        fields = ['id', 'title', 'nickname', 'views', 'created_at', 'comments_count', 'likes_count']
 
 
 class PostDetailSerializer(serializers.ModelSerializer):
@@ -106,6 +106,6 @@ class PostDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post
-        fields = ['id', 'author', 'author_name', 'author_type', 'title', 'content', 'created_at',
+        fields = ['id', 'author', 'author_name', 'author_type', 'title', 'content', 'views', 'created_at',
                   'comments_count', 'likes_count']
         read_only_fields = ['id', 'created_at', 'updated_at']

@@ -20,6 +20,7 @@ class Post(models.Model):
     author = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="posts")
     title = models.CharField(_("title"), max_length=100)
     content = models.TextField(_("content"))
+    views = models.IntegerField(default=0)
     like = models.ManyToManyField(User, through="PostLike", through_fields=("post", "user"), related_name="like_posts")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateField(auto_now=True)

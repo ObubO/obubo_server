@@ -11,12 +11,12 @@ from .models import Post, Comment, PostLike, CommentLike
 
 class PostView(APIView):
     def get(self, request):
-        page = request.data['page']
-        size = request.data['size']
+        size = request.query_params.get('size', 10)
+        page_num = request.query_params.get('page', 1)
 
         post_list = Post.objects.filter().order_by('-created_at')  # 게시글 최신순 조회
         paginator = Paginator(post_list, size)                        # Paginator 설정
-        posts = paginator.get_page(page)
+        posts = paginator.get_page(page_num)
 
         serializer = PostListSerializer(posts, many=True)               # 게시글 리스트 serializer
         result = {"posts": serializer.data}
@@ -47,6 +47,8 @@ class PostView(APIView):
 class PostDetailView(APIView):
     def get(self, request, post_id):
         instance = get_object_or_404(Post, pk=post_id)          # 게시글 인스턴스 조회
+        instance.views += 1
+        instance.save()
         serializer = PostDetailSerializer(instance)             # 조회된 인스턴스 serialize
         result = {"posts": serializer.data}
 
