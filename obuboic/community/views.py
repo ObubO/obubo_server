@@ -76,6 +76,12 @@ class PostDetailView(APIView):
 
 
 class CommentView(APIView):
+    def get(self, request, post_id):
+        comment_list = Comment.objects.filter(post=post_id, parent=None).order_by('-created_at')  # 댓글 최신순 조회
+        serializer = CommentSerializer(instance=comment_list, many=True)
+        result = {"comments": serializer.data}
+        return response.http_200(result)
+
     def post(self, request):
         access_token = request.headers.get('Authorization', None)  # 토큰 조회
 

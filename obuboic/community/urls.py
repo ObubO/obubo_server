@@ -9,6 +9,7 @@ urlpatterns = [
     path('comments', views.CommentView.as_view()),
     path('comments/<int:comment_id>', views.CommentDetailView.as_view()),
     path('comments/<int:comment_id>/like', views.CommentLikeView.as_view()),
+    path('comments/group/<int:post_id>', views.CommentView.as_view()),
 
 ]
 

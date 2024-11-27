@@ -39,6 +39,7 @@ class Comment(models.Model):
     content = models.TextField(_("content"))
     like = models.ManyToManyField(User, through="CommentLike", through_fields=("comment", "user"), related_name="like_comments")
     created_at = models.DateTimeField(auto_now_add=True)
+    parent = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE, related_name="replies")
 
     objects = models.Manager()
 
@@ -46,7 +47,7 @@ class Comment(models.Model):
         verbose_name = "댓글"
 
     def __str__(self):
-        return self.content
+        return self.content[:20]
 
 
 class PostLike(models.Model):
