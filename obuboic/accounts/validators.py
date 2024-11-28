@@ -3,14 +3,11 @@ from django.core.exceptions import ValidationError
 
 
 def validate_id(value):
-    None
-    """
     if not re.match(r'^(?=.*[a-z0-9])[a-z0-9]{4,16}$', value):
         raise ValidationError(
             '4자 이상 16자 이하, 영어 또는 숫자로 구성',
             params={'value': value},
         )
-    """
 
 
 def validate_password(value):

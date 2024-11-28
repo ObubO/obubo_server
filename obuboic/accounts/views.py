@@ -116,7 +116,7 @@ class UserProfileView(APIView):
 
         return response.http_200(result)
 
-    def put(self, request):
+    def patch(self, request):
         access_token = request.headers.get('Authorization', None)  # 토큰 조회
 
         # 토큰 decoding
@@ -207,7 +207,7 @@ class WithdrawalView(APIView):
 # AccessToken 재발급 API
 class CustomTokenRefreshView(TokenRefreshView):
     def post(self, request):
-        refresh_token = request.data.get('refresh')
+        refresh_token = request.headers.get('Authorization', None)  # 토큰 조회
 
         # 토큰 decoding
         try:
@@ -236,12 +236,16 @@ class CustomTokenRefreshView(TokenRefreshView):
 
 # -- 아이디 관리 -- #
 class UsernameSetView(APIView):
+    # 아이디 조회
     def post(self, request):
         phone = request.data['phone']
         member = get_object_or_404(Member, phone=phone)
         username = member.user.username
+        created_at = member.user.created_at
 
-        return response.http_200(username)
+        result = {"id": username, "date": created_at}
+
+        return response.http_200(result)
 
 
 # -- 비밀번호 관리 -- #
@@ -258,7 +262,7 @@ class PasswordSetView(APIView):
             return response.HTTP_400
 
     # 비밀번호 변경
-    def put(self, request):
+    def patch(self, request):
         username, new_password = request.data['username'], request.data['password']
 
         user = get_object_or_404(User, username=username)
@@ -293,10 +297,10 @@ class AuthUserName(APIView):
     def post(self, request):
         name, phone = request.data['name'], request.data['phone']
 
-        try:
-            check_is_exists_name_phone(name, phone)
-        except Exception as e:
-            return response.http_400(str(e))
+        if check_is_exists_name_phone(name, phone):
+            return response.HTTP_200
+        else:
+            return response.HTTP_400
 
 
 # -- 아이디 인증 -- #
@@ -304,10 +308,10 @@ class AuthUserId(APIView):
     def post(self, request):
         username, phone = request.data['username'], request.data['phone']
 
-        try:
-            check_is_exists_username_phone(username, phone)
-        except Exception as e:
-            return response.http_400(str(e))
+        if check_is_exists_username_phone(username, phone):
+            return response.HTTP_200
+        else:
+            return response.HTTP_400
 
 
 # -- 인증번호 확인 -- #

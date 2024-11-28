@@ -27,23 +27,13 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
 
-class UserProfileSerializer(serializers.ModelSerializer):
-    posts = PostUserSerializer(many=True, read_only=True, default=[])
-    comments = CommentUserSerializer(many=True, read_only=True, default=[])
-    like_posts = PostLikeUserSerializer(many=True, source='postlike_set', read_only=True, default=[])
-    like_comments = CommentLikeUserSerializer(many=True, source='commentlike_set', read_only=True, default=[])
-
-    class Meta:
-        model = User
-        fields = ['id', 'username', 'posts', 'comments', 'like_posts', 'like_comments']
-
-
 class MemberSerializer(serializers.ModelSerializer):
-    user = UserProfileSerializer(read_only=True)
+    username = serializers.CharField(source='user.username', read_only=True)
+    user_id = serializers.IntegerField(source='user.id', read_only=True)
 
     class Meta:
         model = Member
-        fields = ['name', 'nickname', 'gender', 'birth', 'phone', 'email', 'user']
+        fields = ['user_id', 'username', 'name', 'nickname', 'gender', 'birth', 'phone', 'email']
 
     def create(self, validated_data, user=None, member_type=None):
         if user is None:

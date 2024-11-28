@@ -45,6 +45,7 @@ class PostView(APIView):
 
 
 class PostDetailView(APIView):
+    # 게시글 상세 조회
     def get(self, request, post_id):
         instance = get_object_or_404(Post, pk=post_id)          # 게시글 인스턴스 조회
         instance.views += 1
@@ -54,10 +55,11 @@ class PostDetailView(APIView):
 
         return response.http_200(result)
 
+    # 게시글 수정
     def put(self, request, post_id):
         serializer = PostSerializer(data=request.data)              # 요청 데이터 직렬화
 
-        if serializer.is_valid():                                   # 요청 데이터 유효성 검사
+        if serializer.is_valid(raise_exception=True):                                   # 요청 데이터 유효성 검사
             instance = get_object_or_404(Post, pk=post_id)          # post 인스턴스 조회
             serializer.update(instance, serializer.validated_data)  # 인스턴스 수정
 
@@ -78,12 +80,14 @@ class PostDetailView(APIView):
 
 
 class CommentView(APIView):
+    # (게시글 당) 댓글 리스트 조회
     def get(self, request, post_id):
         comment_list = Comment.objects.filter(post=post_id, parent=None).order_by('-created_at')  # 댓글 최신순 조회
         serializer = CommentSerializer(instance=comment_list, many=True)
         result = {"comments": serializer.data}
         return response.http_200(result)
 
+    # 댓글 생성
     def post(self, request):
         access_token = request.headers.get('Authorization', None)  # 토큰 조회
 
