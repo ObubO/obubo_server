@@ -1,6 +1,4 @@
-import jwt
 import random
-import requests
 from datetime import datetime, timedelta
 from django.http import QueryDict
 from django.shortcuts import get_object_or_404
@@ -10,7 +8,9 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 from rest_framework_simplejwt.views import TokenRefreshView
 from .models import User, Member, AuthTable
-from .serializers import KakaoSignUpSerializer, CheckPasswordSerializer, MemberSerializer, CheckNicknameSerializer, CheckUserIdSerializer, PhoneNumSerializer, AuthTableSerializer, SignUpSerializer
+from .serializers import SignUpSerializer, KakaoSignUpSerializer, MemberSerializer, PasswordSerializer, \
+    UserIdSerializer, NicknameSerializer, PhoneNumSerializer, AuthTableSerializer,  \
+    UserWritePostSerializer, UserWriteCommentSerializer, UserLikePostSerializer, UserLikeCommentSerializer
 from sms import message
 from common import response
 from .jwt_handler import decode_token, decode_token_without_exp
@@ -63,7 +63,7 @@ class UserCreateView(APIView):
     def get(self, request, username):
         try:
             query_dict = QueryDict('username='+username)
-            serializer = CheckUserIdSerializer(data=query_dict)
+            serializer = UserIdSerializer(data=query_dict)
 
             if serializer.is_valid(raise_exception=True):
                 return response.HTTP_200
@@ -89,7 +89,7 @@ class CheckNickname(APIView):
     def get(self, request, nickname):
         try:
             query_dict = QueryDict('nickname='+nickname)
-            serializer = CheckNicknameSerializer(data=query_dict)
+            serializer = NicknameSerializer(data=query_dict)
 
             if serializer.is_valid(raise_exception=True):
                 return response.HTTP_200
@@ -235,7 +235,7 @@ class CustomTokenRefreshView(TokenRefreshView):
 
 
 # -- 아이디 관리 -- #
-class UsernameSetView(APIView):
+class UserIdView(APIView):
     # 아이디 조회
     def post(self, request):
         phone = request.data['phone']
@@ -249,7 +249,7 @@ class UsernameSetView(APIView):
 
 
 # -- 비밀번호 관리 -- #
-class PasswordSetView(APIView):
+class PasswordView(APIView):
     # 비밀번호 검증
     def post(self, request):
         username, password = request.data['username'], request.data['password']
@@ -267,7 +267,7 @@ class PasswordSetView(APIView):
 
         user = get_object_or_404(User, username=username)
 
-        serializer = CheckPasswordSerializer(data=request.data)
+        serializer = PasswordSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
             user.set_password(new_password)
             user.save()
@@ -398,3 +398,65 @@ class KakaoLogin(APIView):
             return response.http_400("회원정보가 올바르지 않습니다.")
 
 
+class UserWritePost(APIView):
+    def get(self, request):
+        access_token = request.headers.get('Authorization', None)  # 토큰 조회
+
+        # 토큰 decoding
+        try:
+            payload = decode_token(access_token)  # 토큰 decoding
+        except Exception as e:
+            return response.http_400(str(e))
+
+        user = get_object_or_404(User, pk=payload.get('user_id'))
+        serializer = UserWritePostSerializer(instance=user)
+
+        return response.http_200(serializer.data)
+
+
+class UserWriteComment(APIView):
+    def get(self, request):
+        access_token = request.headers.get('Authorization', None)  # 토큰 조회
+
+        # 토큰 decoding
+        try:
+            payload = decode_token(access_token)  # 토큰 decoding
+        except Exception as e:
+            return response.http_400(str(e))
+
+        user = get_object_or_404(User, pk=payload.get('user_id'))
+        serializer = UserWriteCommentSerializer(instance=user)
+
+        return response.http_200(serializer.data)
+
+
+class UserLikePost(APIView):
+    def get(self, request):
+        access_token = request.headers.get('Authorization', None)  # 토큰 조회
+
+        # 토큰 decoding
+        try:
+            payload = decode_token(access_token)  # 토큰 decoding
+        except Exception as e:
+            return response.http_400(str(e))
+
+        user = get_object_or_404(User, pk=payload.get('user_id'))
+        serializer = UserLikePostSerializer(instance=user)
+
+        return response.http_200(serializer.data)
+
+
+class UserLikeComment(APIView):
+    def get(self, request):
+        access_token = request.headers.get('Authorization', None)  # 토큰 조회
+
+        # 토큰 decoding
+        try:
+            payload = decode_token(access_token)  # 토큰 decoding
+        except Exception as e:
+            return response.http_400(str(e))
+
+        user = get_object_or_404(User, pk=payload.get('user_id'))
+        serializer = UserLikeCommentSerializer(instance=user)
+
+        return response.http_200(serializer.data)

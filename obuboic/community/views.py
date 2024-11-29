@@ -2,9 +2,9 @@ from rest_framework.views import APIView
 
 from django.shortcuts import get_object_or_404
 from django.core.paginator import Paginator
-from .serializers import PostSerializer, CommentSerializer, PostListSerializer, PostDetailSerializer
+from .serializers import PostSerializer, CommentSerializer, CommentGroupSerializer, PostListSerializer, PostDetailSerializer
 from common import response
-from accounts.jwt_handler import decode_token
+from accougints.jwt_handler import decode_token
 from accounts.models import User
 from .models import Post, Comment, PostLike, CommentLike
 
@@ -83,7 +83,7 @@ class CommentView(APIView):
     # (게시글 당) 댓글 리스트 조회
     def get(self, request, post_id):
         comment_list = Comment.objects.filter(post=post_id, parent=None).order_by('-created_at')  # 댓글 최신순 조회
-        serializer = CommentSerializer(instance=comment_list, many=True)
+        serializer = CommentGroupSerializer(instance=comment_list, many=True)
         result = {"comments": serializer.data}
         return response.http_200(result)
 

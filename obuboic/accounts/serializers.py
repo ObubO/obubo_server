@@ -1,8 +1,8 @@
 from datetime import datetime
 from rest_framework import serializers
-from .models import MemberType, User, Member, Terms, UserTerms, AuthTable
 from django.shortcuts import get_object_or_404
-from community.serializers import PostSerializer, PostUserSerializer, CommentSerializer, CommentUserSerializer, PostLikeUserSerializer, CommentLikeUserSerializer
+from .models import MemberType, User, Member, Terms, UserTerms, AuthTable
+from community.serializers import PostSerializer, CommentSerializer
 from common import functions
 
 
@@ -13,7 +13,6 @@ class MemberTypeSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = User
         fields = '__all__'
@@ -60,47 +59,43 @@ class MemberSerializer(serializers.ModelSerializer):
         return email
 
 
-class CheckPasswordSerializer(serializers.ModelSerializer):
+class PasswordSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['password']
 
 
-class CheckUserIdSerializer(serializers.ModelSerializer):
+class UserIdSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['username', ]
 
 
-class CheckNicknameSerializer(serializers.ModelSerializer):
+class NicknameSerializer(serializers.ModelSerializer):
     class Meta:
         model = Member
         fields = ['nickname', ]
 
 
 class TermsSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Terms
         fields = '__all__'
 
 
 class UserTermsSeriailzer(serializers.ModelSerializer):
-
     class Meta:
         model = UserTerms
         fields = ['is_consent']
 
 
 class PhoneNumSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = AuthTable
         fields = ['phone']
 
 
 class AuthTableSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = AuthTable
         fields = '__all__'
@@ -258,3 +253,34 @@ class KakaoSignUpSerializer(serializers.ModelSerializer):
                 consent_date=datetime.now(),
             )
 
+
+class UserWritePostSerializer(serializers.ModelSerializer):
+    posts = PostSerializer(many=True)
+
+    class Meta:
+        model = User
+        fields = ['posts']
+
+
+class UserWriteCommentSerializer(serializers.ModelSerializer):
+    comments = CommentSerializer(many=True)
+
+    class Meta:
+        model = User
+        fields = ['comments']
+
+
+class UserLikePostSerializer(serializers.ModelSerializer):
+    like_posts = PostSerializer(many=True)
+
+    class Meta:
+        model = User
+        fields = ['like_posts']
+
+
+class UserLikeCommentSerializer(serializers.ModelSerializer):
+    like_comments = CommentSerializer(many=True)
+
+    class Meta:
+        model = User
+        fields = ['like_comments']
