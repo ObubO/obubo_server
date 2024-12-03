@@ -9,6 +9,8 @@ urlpatterns = [
 
     path('kakao/signup', views.KakaoSignUp.as_view()),      # 간편(카카오) 회원가입
     path('kakao/login', views.KakaoLogin.as_view()),        # 간편(카카오) 로그인
+    path('kakao/auth', views.KakaoAuth.as_view()),          # 간편(카카오) 인증(인가코드 발급) 요청
+    path('kakao/callback', views.KakaoCallback.as_view()),  # 간편(카카오) 인가코드 redirect url
 
     path('check/id/<str:username>', views.UserCreateView.as_view()),        # 회원가입 시 아이디 유효성 확인
     path('check/nickname/<str:nickname>', views.CheckNickname.as_view()),   # 회원가입 시 닉네임 유효성 확인

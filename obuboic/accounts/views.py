@@ -344,10 +344,19 @@ class AuthVerify(APIView):
             return response.http_400("인증번호를 확인해주세요.")
 
 
-class KakaoSignUp(APIView):
+class KakaoAuth(APIView):
+    def get(self, request):
+        result = kakao.request_auth_code()
+        return response.http_200(result)
+
+
+class KakaoCallback(APIView):
     def get(self, request):
         authorization_code = request.GET.get('code', None)
         return response.http_200(authorization_code)
+
+
+class KakaoSignUp(APIView):
 
     def post(self, request):
         try:

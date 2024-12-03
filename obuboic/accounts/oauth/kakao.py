@@ -5,7 +5,20 @@ KAKAO_CLIENT_ID = getattr(settings, "KAKAO_CLIENT_ID")
 KAKAO_SIGNUP_REDIRECT_URI = getattr(settings, "KAKAO_SIGNUP_REDIRECT_URI")
 KAKAO_LOGIN_REDIRECT_URI = getattr(settings, "KAKAO_LOGIN_REDIRECT_URI")
 KAKAO_AUTH_GET_TOKEN_URI = getattr(settings, "KAKAO_AUTH_GET_TOKEN_URI")
+KAKAO_AUTH_REQUEST_CODE_URI = getattr(settings, "KAKAO_AUTH_REQUEST_CODE_URI")
 KAKAO_AUTH_GET_USER_INFO = getattr(settings, "KAKAO_AUTH_GET_USER_INFO")
+
+
+def request_auth_code():
+    try:
+        code_request = requests.get(
+            f'{KAKAO_AUTH_REQUEST_CODE_URI}&client_id={KAKAO_CLIENT_ID}&redirect_uri={KAKAO_SIGNUP_REDIRECT_URI}'
+        )
+
+    except Exception as e:
+        raise Exception(e)
+
+    return code_request
 
 
 def get_auth_code(request):
