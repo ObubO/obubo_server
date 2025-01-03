@@ -1,55 +1,50 @@
 import requests
+from django.http import HttpResponseRedirect
 from django.conf import settings
 
 KAKAO_CLIENT_ID = getattr(settings, "KAKAO_CLIENT_ID")
-KAKAO_SIGNUP_REDIRECT_URI = getattr(settings, "KAKAO_SIGNUP_REDIRECT_URI")
-KAKAO_LOGIN_REDIRECT_URI = getattr(settings, "KAKAO_LOGIN_REDIRECT_URI")
-KAKAO_AUTH_GET_TOKEN_URI = getattr(settings, "KAKAO_AUTH_GET_TOKEN_URI")
-KAKAO_AUTH_REQUEST_CODE_URI = getattr(settings, "KAKAO_AUTH_REQUEST_CODE_URI")
-KAKAO_AUTH_GET_USER_INFO = getattr(settings, "KAKAO_AUTH_GET_USER_INFO")
+KAKAO_REDIRECT_URI = getattr(settings, "KAKAO_REDIRECT_URI")
+KAKAO_REDIRECT_URI_SIGNUP = getattr(settings, "KAKAO_REDIRECT_URI_SIGNUP")
+KAKAO_AUTH_TOKEN_URI = "https://kauth.kakao.com/oauth/token?grant_type=authorization_code"
+KAKAO_AUTH_CODE_URI = "https://kauth.kakao.com/oauth/authorize?response_type=code"
 
 
-def request_auth_code():
-    try:
-        code_request = requests.get(
-            f'{KAKAO_AUTH_REQUEST_CODE_URI}&client_id={KAKAO_CLIENT_ID}&redirect_uri={KAKAO_SIGNUP_REDIRECT_URI}'
-        )
+def request_auth():
+    request_url = f'{KAKAO_AUTH_CODE_URI}&client_id={KAKAO_CLIENT_ID}&redirect_uri={KAKAO_REDIRECT_URI}'
 
-    except Exception as e:
-        raise Exception(e)
-
-    return code_request
+    return HttpResponseRedirect(request_url)
 
 
-def get_auth_code(request):
-    auth_code = request.GET.get('code', None)
+def request_auth_signup():
+    request_url = f'{KAKAO_AUTH_CODE_URI}&client_id={KAKAO_CLIENT_ID}&redirect_uri={KAKAO_REDIRECT_URI_SIGNUP}'
 
-    return auth_code
+    return HttpResponseRedirect(request_url)
 
 
-def get_access_token(code):
-    try:
-        # code는 카카오서버에서 발급한 인가코드
-        token_request = requests.post(
-            f'{KAKAO_AUTH_GET_TOKEN_URI}&client_id={KAKAO_CLIENT_ID}&redirect_uri={KAKAO_SIGNUP_REDIRECT_URI}&code={code}'
-        )
-    except Exception as e:
-        raise Exception(e)
+def request_token(code):
+    token_request = requests.post(
+        f'{KAKAO_AUTH_TOKEN_URI}&client_id={KAKAO_CLIENT_ID}&redirect_uri={KAKAO_REDIRECT_URI}&code={code}'
+    )
 
     kakao_token = token_request.json()
-    kakao_access_token = kakao_token.get("access_token")
 
-    return kakao_access_token
+    return kakao_token
+
+
+def request_token_signup(code):
+    token_request = requests.post(
+        f'{KAKAO_AUTH_TOKEN_URI}&client_id={KAKAO_CLIENT_ID}&redirect_uri={KAKAO_REDIRECT_URI_SIGNUP}&code={code}'
+    )
+
+    kakao_token = token_request.json()
+
+    return kakao_token
 
 
 def get_user_profiles(token):
-    try:
-        # token은 카카오서버에서 발급한 access_token
-        profile_request = requests.post(
-            "https://kapi.kakao.com/v2/user/me", headers={"Authorization": f"Bearer {token}"}
-        )
-    except Exception as e:
-        raise Exception(e)
+    profile_request = requests.post(
+        "https://kapi.kakao.com/v2/user/me", headers={"Authorization": f"Bearer {token}"}
+    )
 
     kakao_profile = profile_request.json()
 

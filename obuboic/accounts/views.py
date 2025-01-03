@@ -1,6 +1,7 @@
 import random
+import string
 from datetime import datetime, timedelta
-from django.http import QueryDict
+from django.http import QueryDict, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import authenticate
 from django.conf import settings
@@ -19,11 +20,6 @@ from .oauth import kakao
 SECRET_KEY = getattr(settings, 'SECRET_KEY', 'SECRET_KEY')
 SMS_API_KEY = getattr(settings, "SMS_API_KEY")
 SMS_API_SECRET = getattr(settings, "SMS_API_SECRET")
-KAKAO_CLIENT_ID = getattr(settings, "KAKAO_CLIENT_ID")
-KAKAO_SIGNUP_REDIRECT_URI = getattr(settings, "KAKAO_SIGNUP_REDIRECT_URI")
-KAKAO_LOGIN_REDIRECT_URI = getattr(settings, "KAKAO_LOGIN_REDIRECT_URI")
-KAKAO_AUTH_GET_TOKEN_URI = getattr(settings, "KAKAO_AUTH_GET_TOKEN_URI")
-KAKAO_AUTH_GET_USER_INFO = getattr(settings, "KAKAO_AUTH_GET_USER_INFO")
 
 
 def send_auth_code(phone):
@@ -55,6 +51,12 @@ def check_is_exists_username_phone(username, phone):
         return True
     else:
         return False
+
+
+def generate_password(length=12):
+    characters = string.ascii_letters + string.digits
+    password = ''.join(random.choices(characters, k=length)) + random.choice('!@#$')
+    return password
 
 
 # -- 회원가입 -- #
@@ -346,29 +348,63 @@ class AuthVerify(APIView):
 
 class KakaoAuth(APIView):
     def get(self, request):
-        result = kakao.request_auth_code()
-        return response.http_200(result)
+        result = kakao.request_auth()
+
+        return result
 
 
 class KakaoCallback(APIView):
+    def handle_kakao_login(self, user):
+        # JWT 토큰 발급
+        token = TokenObtainPairSerializer.get_token(user)
+        refresh_token = str(token)
+        access_token = str(token.access_token)
+
+        # 해당 회원의 Refresh Token 저장
+        user.refresh_token = refresh_token
+        user.last_login = datetime.now()
+        user.save()
+
+        result = {"token": {"access": access_token, "refresh": refresh_token}}
+        return result
+
     def get(self, request):
         authorization_code = request.GET.get('code', None)
-        return response.http_200(authorization_code)
+
+        kakao_token = kakao.request_token(authorization_code)  # 토큰 요청
+        access_token = kakao_token.get("access_token")
+
+        username = kakao.get_user_id(access_token)
+
+        user_exist = User.objects.filter(username=username).exists()
+
+        if user_exist:
+            user = get_object_or_404(User, username=username)
+            result = self.handle_kakao_login(user)
+
+            return response.http_200(result)
+        else:
+            # 카카오싱크 도입 이후 회원가입 진행
+            return response.HTTP_400
 
 
 class KakaoSignUp(APIView):
+    def get(self, request):
+        result = kakao.request_auth_signup()
+
+        return result
 
     def post(self, request):
         try:
             authorization_code = request.data.get('code')               # 인가코드 조회
-            access_token = kakao.get_access_token(authorization_code)   # 토큰 요청
-            username = kakao.get_user_id(access_token)                  # 카카오 계정 코드
-            name = kakao.get_user_nickname(access_token)                # 카카오 닉네임
+
+            kakao_token = kakao.request_token_signup(authorization_code)   # 토큰 요청
+            access_token = kakao_token.get("access_token")
 
             request_data = request.POST.copy()
-            request_data['username'] = username
-            request_data['password'] = username+"!@"
-            request_data['name'] = name
+            request_data['username'] = kakao.get_user_id(access_token)  # 카카오 계정 코드
+            request_data['name'] = kakao.get_user_nickname(access_token)                # 카카오 닉네임
+            request_data['password'] = generate_password()
 
             serializer = KakaoSignUpSerializer(data=request_data)
 
@@ -381,30 +417,11 @@ class KakaoSignUp(APIView):
             return response.http_400(str(e))
 
 
-class KakaoLogin(APIView):
-    def post(self, request):
-        authorization_code = request.data.get('code', None)           # 인가코드 추출
-        access_token = kakao.get_access_token(authorization_code)     # 토큰 요청
-        username = kakao.get_user_id(access_token)                    # 카카오 계정 코드
+class KakaoCallbackSignup(APIView):
+    def get(self, request):
+        authorization_code = request.GET.get('code', None)
 
-        user_exist = User.objects.filter(username=username).exists()
-        user = get_object_or_404(User, username=username)
-
-        if user_exist:
-            # JWT 토큰 발급
-            token = TokenObtainPairSerializer.get_token(user)
-            refresh_token = str(token)
-            access_token = str(token.access_token)
-
-            # 해당 회원의 Refresh Token 저장
-            user.refresh_token = refresh_token
-            user.last_login = datetime.now()
-            user.save()
-
-            result = {"token": {"access": access_token, "refresh": refresh_token}}
-            return response.http_200(result)
-        else:
-            return response.http_400("회원정보가 올바르지 않습니다.")
+        return response.http_200(authorization_code)
 
 
 class UserWritePost(APIView):
