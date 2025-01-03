@@ -4,7 +4,7 @@ from django.shortcuts import get_object_or_404
 from django.core.paginator import Paginator
 from .serializers import PostSerializer, CommentSerializer, CommentGroupSerializer, PostListSerializer, PostDetailSerializer
 from common import response
-from accougints.jwt_handler import decode_token
+from accounts.jwt_handler import decode_token
 from accounts.models import User
 from .models import Post, Comment, PostLike, CommentLike
 
