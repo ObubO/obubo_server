@@ -33,8 +33,8 @@ class PostView(APIView):
         except Exception as e:
             return response.http_400(str(e))
 
-        request_data = request.POST.copy()                      # request.data를 가공하기 위한 복사본 생성
-        request_data['author'] = user.pk                        # request.data에 헤더로 넘어온 회원 데이터 추가
+        request_data = dict(request.data)  # request.data를 딕셔너리로 변환
+        request_data['author'] = user.pk    # author 필드 추가
 
         serializer = PostSerializer(data=request_data)          # 요청 데이터 serialize
 
