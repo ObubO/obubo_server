@@ -18,7 +18,7 @@ class CommentsAdmin(admin.ModelAdmin):
     fields = ['id', 'post', 'author', 'content', 'created_at', 'parent']
     list_display = ('id', 'content', 'post', 'author',)
 
-    readonly_fields = ['id', 'post', 'author', 'created_at', 'parent']
+    readonly_fields = ['id', 'created_at', 'parent']
 
     search_fiedls = ('author', 'post')
     ordering = ('-created_at',)
