@@ -7,7 +7,7 @@ KAKAO_CALLBACK_URI = getattr(settings, "KAKAO_CALLBACK_URI")
 KAKAO_CALLBACK_URI_SIGNUP = getattr(settings, "KAKAO_CALLBACK_URI_SIGNUP")
 KAKAO_REQUEST_TOKEN_URI = "https://kauth.kakao.com/oauth/token?grant_type=authorization_code"
 KAKAO_REQUEST_CODE_URI = "https://kauth.kakao.com/oauth/authorize?response_type=code"
-KAKAO_302_REDIRECT_URI = "https://nursinghome.ai/signUp2"
+KAKAO_302_REDIRECT_URI = "https://nursinghome.ai/kakao/signUp2"
 
 
 # 인가코드 요청(로그인)
