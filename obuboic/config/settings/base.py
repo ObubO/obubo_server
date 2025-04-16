@@ -42,8 +42,8 @@ def get_secret(setting, secrets=secrets):
 
 SECRET_KEY = get_secret("SECRET_KEY")
 KAKAO_CLIENT_ID = get_secret("KAKAO_CLIENT_ID")
-KAKAO_REDIRECT_URI = get_secret("KAKAO_REDIRECT_URI")
-KAKAO_REDIRECT_URI_SIGNUP = get_secret("KAKAO_REDIRECT_URI_SIGNUP")
+KAKAO_CALLBACK_URI = get_secret("KAKAO_CALLBACK_URI")
+KAKAO_CALLBACK_URI_SIGNUP = get_secret("KAKAO_CALLBACK_URI_SIGNUP")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True

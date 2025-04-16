@@ -421,7 +421,9 @@ class KakaoCallbackSignup(APIView):
     def get(self, request):
         authorization_code = request.GET.get('code', None)
 
-        return response.http_200(authorization_code)
+        redirect_uri = f'{kakao.KAKAO_302_REDIRECT_URI}?code={authorization_code}'
+
+        return HttpResponseRedirect(redirect_uri)
 
 
 class UserWritePost(APIView):
