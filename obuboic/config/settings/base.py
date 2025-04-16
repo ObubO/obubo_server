@@ -11,7 +11,6 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 """
 import os.path
 from pathlib import Path
-import pymysql
 
 import json
 from django.core.exceptions import ImproperlyConfigured
@@ -105,8 +104,6 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
-
-pymysql.install_as_MySQLdb()
 
 DATABASES = get_secret("DATABASES")
 
