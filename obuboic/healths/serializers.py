@@ -13,23 +13,30 @@ class CareGradeSimpleSerializer(serializers.ModelSerializer):
         model = CareGradeSimple
         fields = '__all__'
 
+    def create(self, validated_data, user=None):
+        caregrade = CareGradeSimple(
+            user=user,
+            data=validated_data["data"],
+            gender=validated_data["gender"],
+            age=validated_data["age"],
+            region=validated_data["region"],
+        )
+
+        return caregrade
+
 
 class CareGradeDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = CareGradeDetail
         fields = '__all__'
 
-
-class UserCareDetailSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CareGradeDetail
-        fields = ['data', 'age', 'gender']
-
-    def create(self, validated_data):
-        care = CareGradeDetail(
-            data=validated_data['data'],
-            age=validated_data['age'],
-            gender=validated_data['gender'],
+    def create(self, validated_data, user=None):
+        caregrade = CareGradeDetail(
+            user=user,
+            data=validated_data["data"],
+            gender=validated_data["gender"],
+            age=validated_data["age"],
+            region=validated_data["region"],
         )
 
-        return care
+        return caregrade
