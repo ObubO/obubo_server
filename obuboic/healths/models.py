@@ -1,10 +1,9 @@
 from django.db import models
-from django.utils.translation import gettext_lazy as _
 from accounts.models import User
 
 GENDER = (
-        ("M", "Man"),
-        ("W", "Woman"),
+        ("M", "남성"),
+        ("W", "여성"),
 )
 
 REGION = (
@@ -31,69 +30,54 @@ REGION = (
 
 # Create your models here.
 class CareGradeDetail(models.Model):
-    user = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True,
-    )
-    data = models.JSONField(_("data"))
-    gender = models.CharField(_("gender"), max_length=1, choices=GENDER)
-    age = models.IntegerField(_("age"))
-    region = models.CharField(_("region"), max_length=10, choices=REGION, null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
+    data = models.JSONField(verbose_name='등급평가 데이터')
+    gender = models.CharField(verbose_name='성별', max_length=1, choices=GENDER)
+    age = models.IntegerField(verbose_name='나이')
+    region = models.CharField(verbose_name='지역', max_length=10, choices=REGION, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-
-        verbose_name = "요양등급세부평가"
-        verbose_name_plural = "요양등급세부평가 그룹"
+        db_table = 'caregrade_detail'
+        verbose_name = "요양등급 세부평가"
+        verbose_name_plural = "요양등급 세부평가 목록"
 
     def set_user(self, user):
         self.user = user
 
-    def set_gender(self, gender):
-        self.gender = gender
-
-    def set_age(self, age):
-        self.age = age
-
 
 class CareGradeSimple(models.Model):
-    user = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True,
-    )
-    data = models.JSONField(_("data"))
-    gender = models.CharField(_("gender"), max_length=1, choices=GENDER)
-    age = models.IntegerField(_("age"))
-    region = models.CharField(_("region"), max_length=10, choices=REGION, null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
+    data = models.JSONField(verbose_name='등급평가 데이터')
+    gender = models.CharField(verbose_name='성별', max_length=1, choices=GENDER)
+    age = models.IntegerField(verbose_name='나이')
+    region = models.CharField(verbose_name='지역', max_length=10, choices=REGION, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-
-        verbose_name = "요양등급간소평가"
-        verbose_name_plural = "요양등급간소평가 그룹"
+        db_table = 'caregrade_simple'
+        verbose_name = "요양등급 간소평가"
+        verbose_name_plural = "요양등급 간소평가 목록"
 
 
 class CareGradeEx(models.Model):
-    data = models.JSONField(_("data"))
-    gender = models.CharField(_("gender"), max_length=1, choices=GENDER)
-    age = models.IntegerField(_("age"))
-    region = models.CharField(_("region"), max_length=10, choices=REGION, null=True, blank=True)
+    data = models.JSONField(verbose_name='등급평가 데이터')
+    gender = models.CharField(verbose_name='성별', max_length=1, choices=GENDER)
+    age = models.IntegerField(verbose_name='나이')
+    region = models.CharField(verbose_name='지역', max_length=10, choices=REGION, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        db_table = 'caregrade_ex'
         verbose_name = "비회원 요양등급평가"
-        verbose_name_plural = "비회원 요양등급평가그룹"
+        verbose_name_plural = "비회원 요양등급평가 목록"
 
 
 class GovService(models.Model):
     service_id = models.CharField(verbose_name='서비스 ID', max_length=128)
-    name = models.CharField(_("서비스명"), max_length=256)
-    purpose = models.TextField(_("서비스 목적"))
-    category = models.CharField(_("서비스 분야"), max_length=128)
+    name = models.CharField(verbose_name="서비스명", max_length=256)
+    purpose = models.TextField(verbose_name="서비스 목적")
+    category = models.CharField(verbose_name="서비스 분야", max_length=128)
 
     has_region = models.BooleanField(verbose_name='지역제한', default=False)
     region = models.CharField(verbose_name='지역명', max_length=128, null=True, blank=True)

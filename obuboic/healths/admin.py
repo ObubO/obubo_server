@@ -3,19 +3,69 @@ from django.contrib import admin
 from .models import CareGradeEx, CareGradeSimple, CareGradeDetail, GovService
 
 
+@admin.register(CareGradeEx)
 class CareGradeExAdmin(admin.ModelAdmin):
-    fields = ['age', 'gender', 'data', 'region']
-    list_display = ('age', 'gender', 'region')
+    list_display = (
+        'gender', 'age', 'region', 'created_at'
+    )
+    list_filter = ('gender', 'region', 'created_at')
+    ordering = ('-created_at',)
+    readonly_fields = ('created_at',)
+    fieldsets = (
+        ('기본 정보', {
+            'fields': ('gender', 'age', 'region')
+        }),
+        ('등급 평가 데이터', {
+            'fields': ('data',)
+        }),
+        ('시스템 정보', {
+            'fields': ('created_at',)
+        }),
+    )
 
 
+@admin.register(CareGradeSimple)
 class CareGradeSimpleAdmin(admin.ModelAdmin):
-    fields = ['user', 'age', 'gender', 'data', 'region']
-    list_display = ('user', 'age', 'gender', 'region')
+    list_display = (
+        'id', 'gender', 'age', 'region', 'created_at'
+    )
+    list_filter = ('gender', 'region', 'created_at')
+    search_fields = ('user__id',)
+    ordering = ('-created_at',)
+    readonly_fields = ('created_at',)
+    fieldsets = (
+        ('기본 정보', {
+            'fields': ('user', 'gender', 'age', 'region')
+        }),
+        ('등급 평가 데이터', {
+            'fields': ('data',)
+        }),
+        ('시스템 정보', {
+            'fields': ('created_at',)
+        }),
+    )
 
 
+@admin.register(CareGradeDetail)
 class CareGradeDetailAdmin(admin.ModelAdmin):
-    fields = ['user', 'age', 'gender', 'data', 'region']
-    list_display = ('user', 'age', 'gender', 'region')
+    list_display = (
+        'id', 'gender', 'age', 'region', 'created_at'
+    )
+    list_filter = ('gender', 'region', 'created_at')
+    search_fields = ('user__id',)
+    ordering = ('-created_at',)
+    readonly_fields = ('created_at',)
+    fieldsets = (
+        ('기본 정보', {
+            'fields': ('user', 'gender', 'age', 'region')
+        }),
+        ('등급 평가 데이터', {
+            'fields': ('data',)
+        }),
+        ('시스템 정보', {
+            'fields': ('created_at',)
+        }),
+    )
 
 
 @admin.register(GovService)
@@ -47,7 +97,3 @@ class GovServiceAdmin(admin.ModelAdmin):
         }),
     )
 
-
-admin.site.register(CareGradeEx, CareGradeExAdmin)
-admin.site.register(CareGradeSimple, CareGradeSimpleAdmin)
-admin.site.register(CareGradeDetail, CareGradeDetailAdmin)
