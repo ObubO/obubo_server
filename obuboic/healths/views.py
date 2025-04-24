@@ -1,6 +1,6 @@
 from rest_framework.views import APIView
 from django.shortcuts import get_object_or_404
-from .serializers import CareGradeExSerializer, CareGradeSimpleSerializer, CareGradeDetailSerializer
+from .serializers import CareGradeExSerializer, CareGradeSimpleSerializer, CareGradeDetailSerializer, GovServiceSerializer
 from .analysis import AnalysisDiagram, SimpleAnalysisDiagram
 from common import response
 from accounts import jwt_handler
@@ -9,9 +9,13 @@ from accounts.models import User
 
 class CareGradeExAPI(APIView):
     def post(self, request):
-        serializer = CareGradeExSerializer(data=request.data)       # 데이터 유효성 검사 및 저장
-        if serializer.is_valid():
+        serializer = CareGradeExSerializer(data=request.data)
+
+        if serializer.is_valid():       # 데이터 유효성 검사 및 저장
             serializer.save()
+
+            service_queryset = GovServiceSerializer.filter_age_region(self, serializer.validated_data)     # 지원금 조회
+            service_serializer = GovServiceSerializer(service_queryset, many=True)
 
             try:
                 data = serializer.validated_data["data"]        # 등급평가 데이터 분석 및 저장
@@ -20,7 +24,7 @@ class CareGradeExAPI(APIView):
                 score = analysis.get_score()
                 rate = analysis.get_rate(score)
 
-                result = {"score": score, "rate": rate}
+                result = {"score": score, "rate": rate, 'service': service_serializer.data}
 
             except Exception as e:
                 return response.http_400(str(e))
@@ -37,10 +41,14 @@ class CareGradeSimpleAPI(APIView):
         payload = jwt_handler.decode_token(access_token)                # 토큰 복호화
         user = get_object_or_404(User, pk=payload.get('user_id'))       # User 객체 조회
 
-        serializer = CareGradeSimpleSerializer(data=request.data)       # 데이터 유효성 검사 및 저장
-        if serializer.is_valid():
+        serializer = CareGradeSimpleSerializer(data=request.data)
+
+        if serializer.is_valid():                                       # 데이터 유효성 검사 및 저장
             instance = serializer.create(serializer.validated_data, user)
             instance.save()
+
+            service_queryset = GovServiceSerializer.filter_age_region(self, serializer.validated_data)  # 지원금 조회
+            service_serializer = GovServiceSerializer(service_queryset, many=True)
 
             try:
                 data = serializer.validated_data["data"]        # 등급평가 데이터 분석 및 저장
@@ -49,7 +57,7 @@ class CareGradeSimpleAPI(APIView):
                 score = analysis.get_score()
                 rate = analysis.get_rate(score)
 
-                result = {"score": score, "rate": rate}
+                result = {"score": score, "rate": rate, 'service': service_serializer.data}
 
                 return response.http_200(result)
 
@@ -66,10 +74,14 @@ class CareGradeDetailAPI(APIView):
         payload = jwt_handler.decode_token(access_token)                # 토큰 decode
         user = get_object_or_404(User, pk=payload.get('user_id'))       # User 객체 조회
 
-        serializer = CareGradeDetailSerializer(data=request.data)       # 데이터 유효성 검사 및 저장
-        if serializer.is_valid():
+        serializer = CareGradeDetailSerializer(data=request.data)
+
+        if serializer.is_valid():                                       # 데이터 유효성 검사 및 저장
             instance = serializer.create(serializer.validated_data, user)
             instance.save()
+
+            service_queryset = GovServiceSerializer.filter_age_region(self, serializer.validated_data)  # 지원금 조회
+            service_serializer = GovServiceSerializer(service_queryset, many=True)
 
             try:
                 data = serializer.validated_data['data']        # 등급평가 데이터 분석 및 저장
@@ -78,7 +90,7 @@ class CareGradeDetailAPI(APIView):
                 score = analysis.get_score()
                 rate = analysis.get_rate(score)
 
-                result = {"score": score, "rate": rate}
+                result = {"score": score, "rate": rate, 'service': service_serializer.data}
 
                 return response.http_200(result)
 
