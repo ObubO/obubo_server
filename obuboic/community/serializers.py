@@ -2,28 +2,24 @@ from rest_framework import serializers
 from .models import Post, Comment
 
 
-# -- 댓글 기본(CRUD) Serializer --#
 class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
-        fields = ['id', 'post', 'author', 'content', 'created_at', 'parent']
-        read_only_fields = ['id', 'created_at']
+        fields = '__all__'
 
-    def create(self, validated_data):
-        instance = Comment.objects.create(
-            content=validated_data['content'],
-            post=validated_data['post'],
-            author=validated_data['author'],
-            parent=validated_data['parent']
+    def create(self, validated_data, user=None):
+        instance = Comment(
+            author=user,
+            **validated_data
         )
 
         return instance
 
 
-# -- 게시글에 달린 댓글 Serializer(댓글에 달린 대댓글 구분) -- #
-class CommentGroupSerializer(serializers.ModelSerializer):
+# -- 하나의 게시글에 달린 댓글 조회(대댓글 포함) -- #
+class PostCommentSerializer(serializers.ModelSerializer):
     nickname = serializers.CharField(source='author.member.nickname', read_only=True)
-    type = serializers.CharField(source='author.member.member_type.type_name', read_only=True)
+    member_type = serializers.CharField(source='author.member.member_type.type_name', read_only=True)
     likes_count = serializers.IntegerField(source='like.count', read_only=True)
     replies = serializers.SerializerMethodField()
 
@@ -34,39 +30,27 @@ class CommentGroupSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Comment
-        fields = ['id', 'author', 'nickname', 'type', 'content', 'created_at',
-                  'likes_count', 'parent', 'replies']
+        fields = [
+            'id', 'author', 'nickname', 'member_type',
+            'content', 'likes_count', 'replies',
+            'created_at', 'parent'
+        ]
 
 
-# -- 게시글 기본(CRUD) Serializer --#
 class PostSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Post
-        fields = ['id', 'author', 'title', 'content', 'views', 'created_at', 'updated_at']
+        fields = '__all__'
 
-    def create(self, validated_data):
+    def create(self, validated_data, user=None):
         instance = Post.objects.create(
-            author=validated_data['author'],
-            title=validated_data['title'],
-            content=validated_data['content'],
+            author=user,
+            **validated_data
         )
 
         return instance
 
 
-# -- 게시글 목록(리스트) 조회용 Serializer --#
-class PostListSerializer(serializers.ModelSerializer):
-    nickname = serializers.CharField(source='author.member.nickname')
-    comments_count = serializers.IntegerField(source='comments.count', read_only=True)
-    likes_count = serializers.IntegerField(source='like.count', read_only=True)
-
-    class Meta:
-        model = Post
-        fields = ['id', 'title', 'nickname', 'views', 'created_at', 'comments_count', 'likes_count']
-
-
-# -- 게시글 상세 조회용 Serializer -- #
 class PostDetailSerializer(serializers.ModelSerializer):
     nickname = serializers.CharField(source='author.member.nickname', read_only=True)
     author_type = serializers.CharField(source='author.member.member_type.type_name', read_only=True)
@@ -75,6 +59,21 @@ class PostDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post
-        fields = ['id', 'author_type', 'author', 'nickname', 'title', 'content', 'views', 'created_at',
-                  'comments_count', 'likes_count']
-        read_only_fields = ['id', 'created_at', 'updated_at']
+        fields = [
+            'id', 'author', 'nickname', 'author_type',
+            'title', 'content', 'views',
+            'created_at', 'updated_at',
+            'comments_count', 'likes_count'
+        ]
+        read_only_fields = fields
+
+
+# -- 게시글 리스트 조회 --#
+class PostListSerializer(serializers.ModelSerializer):
+    nickname = serializers.CharField(source='author.member.nickname')
+    comments_count = serializers.IntegerField(source='comments.count', read_only=True)
+    likes_count = serializers.IntegerField(source='like.count', read_only=True)
+
+    class Meta:
+        model = Post
+        fields = ['id', 'title', 'nickname', 'views', 'created_at', 'comments_count', 'likes_count']

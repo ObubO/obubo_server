@@ -39,6 +39,10 @@ class Post(models.Model):
     def __str__(self):
         return self.title
 
+    def increase_view_count(self):
+        self.views += 1
+        self.save(update_fields=['views'])
+
 
 class Comment(models.Model):
     parent = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE, related_name="replies")
