@@ -22,13 +22,13 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Post)
 class PostsAdmin(admin.ModelAdmin):
-    list_display = ('id', 'title', 'author', )
-    search_fiedls = ('author', 'title')
+    list_display = ('id', 'title', 'user', )
+    search_fiedls = ('user', 'title')
     ordering = ('-created_at',)
     readonly_fields = ['created_at', 'updated_at', ]
     fieldsets = (
         ('기본 정보', {
-            'fields': ('title', 'author', 'content')
+            'fields': ('title', 'user', 'content')
         }),
         ('시스템 정보', {
             'fields': ('created_at', 'updated_at')
@@ -38,13 +38,13 @@ class PostsAdmin(admin.ModelAdmin):
 
 @admin.register(Comment)
 class CommentsAdmin(admin.ModelAdmin):
-    list_display = ('id', 'content', 'post', 'author',)
-    search_fiedls = ('author', 'post')
+    list_display = ('id', 'content', 'post', 'user',)
+    search_fiedls = ('user', 'post')
     ordering = ('-created_at',)
     readonly_fields = ['parent', 'created_at', 'updated_at']
     fieldsets = (
         ('기본 정보', {
-            'fields': ('post', 'author', 'content')
+            'fields': ('post', 'user', 'content')
         }),
         ('시스템 정보', {
             'fields': ('parent', 'created_at', 'updated_at')

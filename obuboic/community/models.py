@@ -20,7 +20,7 @@ class Category(models.Model):
 
 class Post(models.Model):
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name="posts")
-    author = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="user_posts")
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="user_posts")
     like = models.ManyToManyField(User, through="PostLike", through_fields=("post", "user"), related_name="like_posts")
 
     title = models.CharField(verbose_name="제목", max_length=100)
@@ -47,7 +47,7 @@ class Post(models.Model):
 class Comment(models.Model):
     parent = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE, related_name="replies")
     post = models.ForeignKey(Post, on_delete=models.CASCADE, null=True, related_name="comments")
-    author = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="user_comments")
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="user_comments")
     like = models.ManyToManyField(User, through="CommentLike", through_fields=("comment", "user"),
                                   related_name="like_comments")
 
