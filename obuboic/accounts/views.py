@@ -1,7 +1,7 @@
 import random
 import string
 from datetime import datetime, timedelta
-from django.http import QueryDict, HttpResponseRedirect
+from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import authenticate
 from django.conf import settings
@@ -14,7 +14,7 @@ from .serializers import SignUpSerializer, KakaoSignUpSerializer, UserProfileSer
     UserWritePostSerializer, UserWriteCommentSerializer, UserLikePostSerializer, UserLikeCommentSerializer
 from sms import message
 from common import response
-from .jwt_handler import decode_token, decode_token_without_exp
+from . import jwt_handler
 from .oauth import kakao
 
 SECRET_KEY = getattr(settings, 'SECRET_KEY', 'SECRET_KEY')
@@ -24,12 +24,10 @@ SMS_API_SECRET = getattr(settings, "SMS_API_SECRET")
 
 def send_auth_code(phone):
     try:
-        # 인증코드 생성 및 저장
-        code = str(random.randint(100000, 999999))
+        code = str(random.randint(100000, 999999))          # 인증코드 생성 및 저장
         AuthTable.objects.create(phone=phone, code=code)
 
-        # 인증 코드 전송
-        message.send_sms(SMS_API_KEY, SMS_API_SECRET, phone, code)
+        message.send_sms(SMS_API_KEY, SMS_API_SECRET, phone, code)   # 인증 코드 전송
 
     except Exception as e:
         raise Exception(e)
@@ -63,41 +61,24 @@ def generate_password(length=12):
 class UserCreateView(APIView):
     # 중복 아이디 확인
     def get(self, request, username):
-        try:
-            query_dict = QueryDict('username='+username)
-            serializer = UserIdSerializer(data=query_dict)
-
-            if serializer.is_valid(raise_exception=True):
-                return response.HTTP_200
-
-        except Exception as e:
-            return response.http_400(str(e))
+        serializer = UserIdSerializer(data={'username': username})
+        if serializer.is_valid(raise_exception=True):
+            return response.HTTP_200
 
     # 회원가입
     def post(self, request):
-        try:
-            serializer = SignUpSerializer(data=request.data)
-
-            if serializer.is_valid(raise_exception=True):
-                serializer.save()
-                return response.HTTP_201
-
-        except Exception as e:
-            return response.http_400(str(e))
+        serializer = SignUpSerializer(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+            return response.HTTP_201
 
 
 # 닉네임 중복 확인
 class CheckNickname(APIView):
     def get(self, request, nickname):
-        try:
-            query_dict = QueryDict('nickname='+nickname)
-            serializer = NicknameSerializer(data=query_dict)
-
-            if serializer.is_valid(raise_exception=True):
-                return response.HTTP_200
-
-        except Exception as e:
-            return response.http_400(str(e))
+        serializer = NicknameSerializer(data={'nickname': nickname})
+        if serializer.is_valid(raise_exception=True):
+            return response.HTTP_200
 
 
 # 계정 조회/수정 API
@@ -107,7 +88,7 @@ class UserProfileView(APIView):
 
         # 토큰 decoding
         try:
-            payload = decode_token(access_token)  # 토큰 decoding
+            payload = jwt_handler.decode_token(access_token)  # 토큰 decoding
             user = get_object_or_404(User, pk=payload.get('user_id'))
         except Exception as e:
             return response.http_400(str(e))
@@ -123,7 +104,7 @@ class UserProfileView(APIView):
 
         # 토큰 decoding
         try:
-            payload = decode_token(access_token)  # 토큰 decoding
+            payload = jwt_handler.decode_token(access_token)  # 토큰 decoding
             user = get_object_or_404(User, pk=payload.get('user_id'))
         except Exception as e:
             return response.http_400(str(e))
@@ -175,7 +156,7 @@ class LogoutView(APIView):
 
         # JWT 인증 - 기간만료 무시
         try:
-            payload = decode_token_without_exp(refresh)
+            payload = jwt_handler.decode_token_without_exp(refresh)
         except Exception as e:
             return response.http_400(str(e))
 
@@ -196,7 +177,7 @@ class WithdrawalView(APIView):
 
         # 토큰 decoding
         try:
-            payload = decode_token(access_token)  # 토큰 decoding
+            payload = jwt_handler.decode_token(access_token)  # 토큰 decoding
         except Exception as e:
             return response.http_400(str(e))
 
@@ -213,7 +194,7 @@ class CustomTokenRefreshView(TokenRefreshView):
 
         # 토큰 decoding
         try:
-            payload = decode_token(refresh_token)  # 토큰 decoding
+            payload = jwt_handler.decode_token(refresh_token)  # 토큰 decoding
             user = get_object_or_404(User, pk=payload.get('user_id'))
         except Exception as e:
             return response.http_400(str(e))
@@ -432,7 +413,7 @@ class UserWritePost(APIView):
 
         # 토큰 decoding
         try:
-            payload = decode_token(access_token)  # 토큰 decoding
+            payload = jwt_handler.decode_token(access_token)  # 토큰 decoding
         except Exception as e:
             return response.http_400(str(e))
 
@@ -448,7 +429,7 @@ class UserWriteComment(APIView):
 
         # 토큰 decoding
         try:
-            payload = decode_token(access_token)  # 토큰 decoding
+            payload = jwt_handler.decode_token(access_token)  # 토큰 decoding
         except Exception as e:
             return response.http_400(str(e))
 
@@ -464,7 +445,7 @@ class UserLikePost(APIView):
 
         # 토큰 decoding
         try:
-            payload = decode_token(access_token)  # 토큰 decoding
+            payload = jwt_handler.decode_token(access_token)  # 토큰 decoding
         except Exception as e:
             return response.http_400(str(e))
 
@@ -480,7 +461,7 @@ class UserLikeComment(APIView):
 
         # 토큰 decoding
         try:
-            payload = decode_token(access_token)  # 토큰 decoding
+            payload = jwt_handler.decode_token(access_token)  # 토큰 decoding
         except Exception as e:
             return response.http_400(str(e))
 
@@ -488,3 +469,4 @@ class UserLikeComment(APIView):
         serializer = UserLikeCommentSerializer(instance=user)
 
         return response.http_200(serializer.data)
+
