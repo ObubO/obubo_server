@@ -18,8 +18,8 @@ class CommentSerializer(serializers.ModelSerializer):
 
 # -- 하나의 게시글에 달린 댓글 조회(대댓글 포함) -- #
 class PostCommentSerializer(serializers.ModelSerializer):
-    nickname = serializers.CharField(source='author.member.nickname', read_only=True)
-    member_type = serializers.CharField(source='author.member.member_type.type_name', read_only=True)
+    nickname = serializers.CharField(source='author.user_profile.nickname', read_only=True)
+    user_type = serializers.CharField(source='author.user_profile.user_type.name', read_only=True)
     likes_count = serializers.IntegerField(source='like.count', read_only=True)
     replies = serializers.SerializerMethodField()
 
@@ -31,7 +31,7 @@ class PostCommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
         fields = [
-            'id', 'author', 'nickname', 'member_type',
+            'id', 'author', 'nickname', 'user_type',
             'content', 'likes_count', 'replies',
             'created_at', 'parent'
         ]
@@ -52,8 +52,8 @@ class PostSerializer(serializers.ModelSerializer):
 
 
 class PostDetailSerializer(serializers.ModelSerializer):
-    nickname = serializers.CharField(source='author.member.nickname', read_only=True)
-    author_type = serializers.CharField(source='author.member.member_type.type_name', read_only=True)
+    author_type = serializers.CharField(source='author.user_profile.user_type.name', read_only=True)
+    nickname = serializers.CharField(source='author.user_profile.nickname', read_only=True)
     comments_count = serializers.IntegerField(source='comments.count', read_only=True)
     likes_count = serializers.IntegerField(source='like.count', read_only=True)
 
@@ -70,7 +70,7 @@ class PostDetailSerializer(serializers.ModelSerializer):
 
 # -- 게시글 리스트 조회 --#
 class PostListSerializer(serializers.ModelSerializer):
-    nickname = serializers.CharField(source='author.member.nickname')
+    nickname = serializers.CharField(source='author.user_profile.nickname')
     comments_count = serializers.IntegerField(source='comments.count', read_only=True)
     likes_count = serializers.IntegerField(source='like.count', read_only=True)
 

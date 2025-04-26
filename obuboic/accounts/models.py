@@ -52,23 +52,24 @@ class UserManger(BaseUserManager):
 
 class User(AbstractBaseUser, PermissionsMixin):
     username_validator = UnicodeUsernameValidator()
-    username = models.CharField(_("username"), max_length=20, unique=True, validators=[validate_id])
-    password = models.CharField(_("password"), max_length=255, validators=[validate_password])
+    username = models.CharField(verbose_name='아이디', max_length=20, unique=True, validators=[validate_id])
+    password = models.CharField(verbose_name='비밀번호', max_length=255, validators=[validate_password])
+    refresh_token = models.CharField(verbose_name='refresh_token', max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateField(auto_now=True)
-    refresh_token = models.CharField(_("refresh_token"), max_length=255, null=True, blank=True)
 
-    is_active = models.BooleanField(_("active"), default=True)
+    is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
     is_social = models.BooleanField(default=False)
 
     objects = UserManger()
 
-    USERNAME_FIELD = "username"
+    USERNAME_FIELD = 'username'
 
     class Meta:
-        verbose_name = _("user")
-        verbose_name_plural = _("users")
+        db_table = 'user'
+        verbose_name = '사용자'
+        verbose_name_plural = '사용자 목록'
 
     def __str__(self):
         return self.username
@@ -78,33 +79,37 @@ class User(AbstractBaseUser, PermissionsMixin):
         return self.is_admin
 
 
-class MemberType(models.Model):
-    type_name = models.CharField(_("type_name"), max_length=10)
+class UserType(models.Model):
+    name = models.CharField(verbose_name='회원유형', max_length=10)
 
     objects = models.Manager()
 
     class Meta:
-        verbose_name = "회원 유형"
+        db_table = 'user_type'
+        verbose_name = "회원유형"
+        verbose_name_plural = '회원유형 목록'
 
     def __str__(self):
-        return self.type_name
+        return self.name
 
 
-class Member(models.Model):
-    name = models.CharField(_("name"), max_length=10, validators=[validate_name], null=True, blank=True)
-    nickname = models.CharField(_("nickname"), max_length=20, unique=True, validators=[validate_nickname], null=True, blank=True)
-    gender = models.CharField(_("gender"), max_length=1, choices=GENDER, null=True, blank=True,)
-    birth = models.DateField(_("birth"), null=True, blank=True)
-    phone = models.CharField(_("phone"), max_length=11, unique=True, validators=[validate_phone], null=True, blank=True)
-    email = models.EmailField(_("email"), max_length=50, unique=True, null=True, blank=True)
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='user_profiles')
+    user_type = models.ForeignKey(UserType, on_delete=models.PROTECT, blank=True, null=True, default=None)
 
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='member')
-    member_type = models.ForeignKey(MemberType, on_delete=models.PROTECT, blank=True, null=True, default=None)
+    name = models.CharField(verbose_name='이름', max_length=10, validators=[validate_name], null=True, blank=True)
+    nickname = models.CharField(verbose_name='닉네임', max_length=20, unique=True, validators=[validate_nickname], null=True, blank=True)
+    gender = models.CharField(verbose_name='성별', max_length=1, choices=GENDER, null=True, blank=True,)
+    birth = models.DateField(verbose_name='생년월일', null=True, blank=True)
+    phone = models.CharField(verbose_name='전화번호', max_length=11, unique=True, validators=[validate_phone], null=True, blank=True)
+    email = models.EmailField(verbose_name='이메일', max_length=50, unique=True, null=True, blank=True)
 
     objects = models.Manager()
 
     class Meta:
-        verbose_name = "회원 정보"
+        db_table = 'user_profile'
+        verbose_name = "회원정보"
+        verbose_name_plural = '회원정보 목록'
 
     def __str__(self):
         return self.name
@@ -114,8 +119,8 @@ class Member(models.Model):
 
 
 class AuthTable(models.Model):
-    phone = models.CharField(_("phone"), max_length=11, validators=[validate_phone])
-    code = models.CharField(_("code"), max_length=6)
+    phone = models.CharField(verbose_name='전화번호', max_length=11, validators=[validate_phone])
+    code = models.CharField(verbose_name='인증번호', max_length=6)
     created_at = models.DateTimeField(auto_now_add=True)
 
     objects = models.Manager()
@@ -125,35 +130,33 @@ class AuthTable(models.Model):
 
 
 class Terms(models.Model):
-    title = models.CharField(_("name"), max_length=20)
-    content = models.TextField(_("name"))
-    is_necessary = models.BooleanField(_("is_necessary"), default=True)
+    title = models.CharField(verbose_name='약관명', max_length=20)
+    content = models.TextField(verbose_name='약관내용')
+    is_necessary = models.BooleanField(verbose_name='필수여부', default=True)
 
     objects = models.Manager()
 
     class Meta:
-        verbose_name = "개인정보 이용약관"
+        db_table = 'terms'
+        verbose_name = "이용약관"
+        verbose_name_plural = "이용약관 목록"
 
     def __str__(self):
         return self.title
 
 
 class UserTerms(models.Model):
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-    )
-    terms = models.ForeignKey(
-        Terms,
-        on_delete=models.CASCADE,
-    )
-    is_consent = models.CharField(_("is_consent"), max_length=5, choices=CONSENT)
-    consent_date = models.DateField(_("consent_date"), auto_now_add=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    terms = models.ForeignKey(Terms, on_delete=models.CASCADE)
+    is_consent = models.CharField(verbose_name='동의여부', max_length=5, choices=CONSENT)
+    consent_date = models.DateField(verbose_name='동의날짜', auto_now_add=True)
 
     objects = models.Manager()
 
     class Meta:
-        verbose_name = "약관 동의"
+        db_table = 'user_terms'
+        verbose_name = "이용약관 동의"
+        verbose_name_plural = "이용약관 동의 목록"
 
     def __str__(self):
-        return self.user.username
+        return f"[{self.terms}] {self.user.username}"

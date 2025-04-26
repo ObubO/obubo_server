@@ -8,8 +8,8 @@ from django.conf import settings
 from rest_framework.views import APIView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 from rest_framework_simplejwt.views import TokenRefreshView
-from .models import User, Member, AuthTable
-from .serializers import SignUpSerializer, KakaoSignUpSerializer, MemberSerializer, PasswordSerializer, \
+from .models import User, UserProfile, AuthTable
+from .serializers import SignUpSerializer, KakaoSignUpSerializer, UserProfileSerializer, PasswordSerializer, \
     UserIdSerializer, NicknameSerializer, PhoneNumSerializer, AuthTableSerializer,  \
     UserWritePostSerializer, UserWriteCommentSerializer, UserLikePostSerializer, UserLikeCommentSerializer
 from sms import message
@@ -36,8 +36,8 @@ def send_auth_code(phone):
 
 
 def check_is_exists_name_phone(name, phone):
-    member_exists = Member.objects.filter(name=name, phone=phone).exists()
-    if member_exists:
+    user_profile_exists = UserProfile.objects.filter(name=name, phone=phone).exists()
+    if user_profile_exists:
         send_auth_code(phone)
         return True
     else:
@@ -46,7 +46,7 @@ def check_is_exists_name_phone(name, phone):
 
 def check_is_exists_username_phone(username, phone):
     user_instance = get_object_or_404(User, username=username)
-    if user_instance.member.phone == phone:
+    if user_instance.user_profile.phone == phone:
         send_auth_code(phone)
         return True
     else:
@@ -112,9 +112,9 @@ class UserProfileView(APIView):
         except Exception as e:
             return response.http_400(str(e))
 
-        member = get_object_or_404(Member, user=user)
-        member_serializer = MemberSerializer(instance=member)
-        result = {"member": member_serializer.data}
+        user_profile = get_object_or_404(UserProfile, user=user)
+        user_profile_serializer = UserProfileSerializer(instance=user_profile)
+        result = {"user_profile": user_profile_serializer.data}
 
         return response.http_200(result)
 
@@ -128,14 +128,14 @@ class UserProfileView(APIView):
         except Exception as e:
             return response.http_400(str(e))
 
-        serializer = MemberSerializer(data=request.data)            # 요청 데이터 직렬화
+        serializer = UserProfileSerializer(data=request.data)            # 요청 데이터 직렬화
 
         if serializer.is_valid(raise_exception=True):               # 요청 데이터 유효성 검사
-            member = get_object_or_404(Member, user=user)
-            updated_member = serializer.update(member, serializer.validated_data)    # 회원 인스턴스 수정
+            user_profile = get_object_or_404(UserProfile, user=user)
+            updated_user_profile = serializer.update(user_profile, serializer.validated_data)    # 회원 인스턴스 수정
 
-            member_serializer = MemberSerializer(instance=updated_member)
-            result = {"member": member_serializer.data}
+            user_profile_serializer = UserProfileSerializer(instance=updated_user_profile)
+            result = {"user_profile": user_profile_serializer.data}
 
             return response.http_200(result)
 
@@ -241,9 +241,9 @@ class UserIdView(APIView):
     # 아이디 조회
     def post(self, request):
         phone = request.data['phone']
-        member = get_object_or_404(Member, phone=phone)
-        username = member.user.username
-        created_at = member.user.created_at
+        user_profile = get_object_or_404(UserProfile, phone=phone)
+        username = user_profile.user.username
+        created_at = user_profile.user.created_at
 
         result = {"id": username, "date": created_at}
 

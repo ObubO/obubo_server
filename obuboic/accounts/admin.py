@@ -4,10 +4,11 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 from django.contrib.auth.forms import UserChangeForm, UserCreationForm
 
-from .models import User, Member, MemberType, Terms, UserTerms
+from .models import User, UserProfile, UserType, Terms, UserTerms
 
 
 # Register your models here.
+@admin.register(User)
 class UserAdmin(BaseUserAdmin):
     fieldsets = (
         (None,          {'fields': ('username', 'password')}),
@@ -33,22 +34,25 @@ class UserAdmin(BaseUserAdmin):
     filter_horizontal = ()
 
 
-class MemberAdmin(admin.ModelAdmin):
-    fields = ['user', 'name', 'nickname', 'gender', 'phone', 'birth', 'email', 'member_type', ]
-    list_display = ('user', 'name', 'member_type', 'is_active')
+@admin.register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    fields = ['user', 'name', 'nickname', 'gender', 'phone', 'birth', 'email', 'user_type', ]
+    list_display = ('user', 'name', 'user_type', 'is_active')
 
     def is_active(self, obj):
         return obj.user.is_active
 
-    search_fields = ('name', 'member_type')
+    search_fields = ('name', 'user_type')
     ordering = ('name',)
 
 
-class MemberTypeAdmin(admin.ModelAdmin):
-    fields = ['type_name', ]
-    list_display = ('type_name', )
+@admin.register(UserType)
+class UserTypeAdmin(admin.ModelAdmin):
+    fields = ['id', 'name', ]
+    list_display = ('id', 'name', )
 
 
+@admin.register(Terms)
 class TermsAdmin(admin.ModelAdmin):
     fields = ['title', 'content', 'is_necessary', ]
     list_display = ('title', 'is_necessary', )
@@ -59,6 +63,7 @@ class TermsAdmin(admin.ModelAdmin):
     ordering = ('title', )
 
 
+@admin.register(UserTerms)
 class UserTermsAdmin(admin.ModelAdmin):
     fields = ['user', 'terms', 'is_consent', 'consent_date', ]
     list_display = ('user', 'terms', 'is_consent', )
@@ -69,9 +74,4 @@ class UserTermsAdmin(admin.ModelAdmin):
     ordering = ('user', )
 
 
-admin.site.register(User, UserAdmin)
-admin.site.register(Member, MemberAdmin)
-admin.site.register(MemberType, MemberTypeAdmin)
-admin.site.register(Terms, TermsAdmin)
-admin.site.register(UserTerms, UserTermsAdmin)
 admin.site.unregister(Group)
