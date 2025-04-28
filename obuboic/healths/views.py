@@ -3,8 +3,7 @@ from django.shortcuts import get_object_or_404
 from .serializers import CareGradeExSerializer, CareGradeSimpleSerializer, CareGradeDetailSerializer, GovServiceSerializer
 from .analysis import AnalysisDiagram, SimpleAnalysisDiagram
 from common import response
-from accounts import jwt_handler
-from accounts.models import User
+from accounts.authentication import JWTAuthentication
 
 
 class CareGradeExAPI(APIView):
@@ -36,14 +35,14 @@ class CareGradeExAPI(APIView):
 
 
 class CareGradeSimpleAPI(APIView):
+    authentication_classes = [JWTAuthentication]
+
     def post(self, request):
-        access_token = request.headers.get('Authorization', None)
-        payload = jwt_handler.decode_token(access_token)                # 토큰 복호화
-        user = get_object_or_404(User, pk=payload.get('user_id'))       # User 객체 조회
+        user = request.user                                             # 회원 인증 및 User 인스턴스 조회
+        print(user)
+        serializer = CareGradeSimpleSerializer(data=request.data)       # 데이터 유효성 검사
 
-        serializer = CareGradeSimpleSerializer(data=request.data)
-
-        if serializer.is_valid():                                       # 데이터 유효성 검사 및 저장
+        if serializer.is_valid():
             instance = serializer.create(serializer.validated_data, user)
             instance.save()
 
@@ -69,14 +68,13 @@ class CareGradeSimpleAPI(APIView):
 
 
 class CareGradeDetailAPI(APIView):
+    authentication_classes = [JWTAuthentication]
+
     def post(self, request):
-        access_token = request.headers.get('Authorization', None)       # 토큰 정보 조회
-        payload = jwt_handler.decode_token(access_token)                # 토큰 decode
-        user = get_object_or_404(User, pk=payload.get('user_id'))       # User 객체 조회
+        user = request.user                                             # 회원 인증 및 User 인스턴스 조회
+        serializer = CareGradeDetailSerializer(data=request.data)       # 데이터 유효성 검사
 
-        serializer = CareGradeDetailSerializer(data=request.data)
-
-        if serializer.is_valid():                                       # 데이터 유효성 검사 및 저장
+        if serializer.is_valid():
             instance = serializer.create(serializer.validated_data, user)
             instance.save()
 

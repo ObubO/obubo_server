@@ -14,8 +14,9 @@ from .serializers import SignUpSerializer, KakaoSignUpSerializer, UserProfileSer
     UserWritePostSerializer, UserWriteCommentSerializer, UserLikePostSerializer, UserLikeCommentSerializer
 from sms import message
 from common import response
-from . import jwt_handler
 from .oauth import kakao
+
+from .authentication import JWTAuthentication
 
 SECRET_KEY = getattr(settings, 'SECRET_KEY', 'SECRET_KEY')
 SMS_API_KEY = getattr(settings, "SMS_API_KEY")
@@ -83,37 +84,26 @@ class CheckNickname(APIView):
 
 # 계정 조회/수정 API
 class UserProfileView(APIView):
+    authentication_classes = [JWTAuthentication]
+
     def get(self, request):
-        access_token = request.headers.get('Authorization', None)  # 토큰 조회
+        user = request.user
 
-        # 토큰 decoding
-        try:
-            payload = jwt_handler.decode_token(access_token)  # 토큰 decoding
-            user = get_object_or_404(User, pk=payload.get('user_id'))
-        except Exception as e:
-            return response.http_400(str(e))
+        user_profile_instance = get_object_or_404(UserProfile, user=user)
+        user_profile_serializer = UserProfileSerializer(instance=user_profile_instance)
 
-        user_profile = get_object_or_404(UserProfile, user=user)
-        user_profile_serializer = UserProfileSerializer(instance=user_profile)
         result = {"user_profile": user_profile_serializer.data}
 
         return response.http_200(result)
 
     def patch(self, request):
-        access_token = request.headers.get('Authorization', None)  # 토큰 조회
+        user = request.user
+        user_profile_instance = get_object_or_404(UserProfile, user=user)       # 회원 프로필 인스턴스 조회
 
-        # 토큰 decoding
-        try:
-            payload = jwt_handler.decode_token(access_token)  # 토큰 decoding
-            user = get_object_or_404(User, pk=payload.get('user_id'))
-        except Exception as e:
-            return response.http_400(str(e))
+        user_profile_serializer = UserProfileSerializer(data=request.data)      # 데이터 유효성 검사
 
-        serializer = UserProfileSerializer(data=request.data)            # 요청 데이터 직렬화
-
-        if serializer.is_valid(raise_exception=True):               # 요청 데이터 유효성 검사
-            user_profile = get_object_or_404(UserProfile, user=user)
-            updated_user_profile = serializer.update(user_profile, serializer.validated_data)    # 회원 인스턴스 수정
+        if user_profile_serializer.is_valid(raise_exception=True):
+            updated_user_profile = user_profile_serializer.update(user_profile_instance, user_profile_serializer.validated_data)    # 회원 프로필 인스턴스 수정
 
             user_profile_serializer = UserProfileSerializer(instance=updated_user_profile)
             result = {"user_profile": user_profile_serializer.data}
@@ -123,65 +113,50 @@ class UserProfileView(APIView):
 
 # 계정 로그인 API
 class LoginView(APIView):
+    authentication_classes = [JWTAuthentication]
+
     def post(self, request):
-        try:
-            # ID/PW 인증
-            user = authenticate(username=request.data.get("username"), password=request.data.get("password"))
+        username = request.data.get("username")
+        password = request.data.get("password")
 
-            # 인증 통과시(회원이 존재하는 경우)
-            if user is not None:
-                # JWT 토큰 발급
-                token = TokenObtainPairSerializer.get_token(user)
-                refresh_token = str(token)
-                access_token = str(token.access_token)
+        if not username or not password:
+            return response.http_400("아이디와 비밀번호를 입력해주세요.")
 
-                # 해당 회원의 Refresh Token 저장
-                user.refresh_token = refresh_token
-                user.last_login = datetime.now()
-                user.save()
+        user = authenticate(username=username, password=password)
+        if user is None:
+            return response.http_400("회원정보가 올바르지 않습니다.")
 
-                result = {"token": {"access": access_token, "refresh": refresh_token}}
-                return response.http_200(result)
-            else:
-                return response.http_400("회원정보가 올바르지 않습니다.")
+        token = TokenObtainPairSerializer.get_token(user)   # JWT 토큰 발급
+        access_token = str(token.access_token)
+        refresh_token = str(token)
 
-        except Exception as e:
-            return response.http_400(str(e))
+        user.refresh_token = refresh_token          # refresh token 업데이트
+        user.last_login = datetime.now()            # 마지막 로그인 시각 업데이트
+        user.save(update_fields=["refresh_token", "last_login"])
+
+        result = {"token": {"access": access_token, "refresh": refresh_token}}
+
+        return response.http_200(result)
 
 
 # 계정 로그아웃 API
 class LogoutView(APIView):
+    authentication_classes = [JWTAuthentication]
+
     def post(self, request):
-        refresh = request.headers.get('Authorization', None)
-
-        # JWT 인증 - 기간만료 무시
-        try:
-            payload = jwt_handler.decode_token_without_exp(refresh)
-        except Exception as e:
-            return response.http_400(str(e))
-
-        # 사용자 조회
-        user = get_object_or_404(User, pk=payload.get('user_id'))
-
-        # 해당 회원의 Refresh Token 삭제
+        user = request.user
         user.refresh_token = None
-        user.save()
+        user.save(update_fields=["refresh_token"])
 
         return response.HTTP_200
 
 
 # 회원 탈퇴 API
 class WithdrawalView(APIView):
+    authentication_classes = [JWTAuthentication]
+
     def post(self, request):
-        access_token = request.headers.get('Authorization', None)  # 토큰 조회
-
-        # 토큰 decoding
-        try:
-            payload = jwt_handler.decode_token(access_token)  # 토큰 decoding
-        except Exception as e:
-            return response.http_400(str(e))
-
-        user = get_object_or_404(User, pk=payload.get('user_id'))
+        user = request.user
         user.delete()
 
         return response.HTTP_200
@@ -189,15 +164,11 @@ class WithdrawalView(APIView):
 
 # AccessToken 재발급 API
 class CustomTokenRefreshView(TokenRefreshView):
+    authentication_classes = [JWTAuthentication]
+
     def post(self, request):
         refresh_token = request.headers.get('Authorization', None)  # 토큰 조회
-
-        # 토큰 decoding
-        try:
-            payload = jwt_handler.decode_token(refresh_token)  # 토큰 decoding
-            user = get_object_or_404(User, pk=payload.get('user_id'))
-        except Exception as e:
-            return response.http_400(str(e))
+        user = request.user
 
         # -- 탈취당한 Refresh Token 여부 -- #
         # 정상적 요청인 경우
@@ -217,16 +188,14 @@ class CustomTokenRefreshView(TokenRefreshView):
             return response.http_403("사용자가 삭제한 토큰입니다.")
 
 
-# -- 아이디 관리 -- #
-class UserIdView(APIView):
-    # 아이디 조회
+# -- 아이디 찾기 -- #
+class FindUsernameView(APIView):
     def post(self, request):
         phone = request.data['phone']
         user_profile = get_object_or_404(UserProfile, phone=phone)
-        username = user_profile.user.username
-        created_at = user_profile.user.created_at
+        user = user_profile.user
 
-        result = {"id": username, "date": created_at}
+        result = {"id": user.username, "date": user.created_at}
 
         return response.http_200(result)
 
@@ -408,64 +377,40 @@ class KakaoCallbackSignup(APIView):
 
 
 class UserWritePost(APIView):
+    authentication_classes = [JWTAuthentication]
+
     def get(self, request):
-        access_token = request.headers.get('Authorization', None)  # 토큰 조회
-
-        # 토큰 decoding
-        try:
-            payload = jwt_handler.decode_token(access_token)  # 토큰 decoding
-        except Exception as e:
-            return response.http_400(str(e))
-
-        user = get_object_or_404(User, pk=payload.get('user_id'))
+        user = request.user
         serializer = UserWritePostSerializer(instance=user)
 
         return response.http_200(serializer.data)
 
 
 class UserWriteComment(APIView):
+    authentication_classes = [JWTAuthentication]
+
     def get(self, request):
-        access_token = request.headers.get('Authorization', None)  # 토큰 조회
-
-        # 토큰 decoding
-        try:
-            payload = jwt_handler.decode_token(access_token)  # 토큰 decoding
-        except Exception as e:
-            return response.http_400(str(e))
-
-        user = get_object_or_404(User, pk=payload.get('user_id'))
+        user = request.user
         serializer = UserWriteCommentSerializer(instance=user)
 
         return response.http_200(serializer.data)
 
 
 class UserLikePost(APIView):
+    authentication_classes = [JWTAuthentication]
+
     def get(self, request):
-        access_token = request.headers.get('Authorization', None)  # 토큰 조회
-
-        # 토큰 decoding
-        try:
-            payload = jwt_handler.decode_token(access_token)  # 토큰 decoding
-        except Exception as e:
-            return response.http_400(str(e))
-
-        user = get_object_or_404(User, pk=payload.get('user_id'))
+        user = request.user
         serializer = UserLikePostSerializer(instance=user)
 
         return response.http_200(serializer.data)
 
 
 class UserLikeComment(APIView):
+    authentication_classes = [JWTAuthentication]
+
     def get(self, request):
-        access_token = request.headers.get('Authorization', None)  # 토큰 조회
-
-        # 토큰 decoding
-        try:
-            payload = jwt_handler.decode_token(access_token)  # 토큰 decoding
-        except Exception as e:
-            return response.http_400(str(e))
-
-        user = get_object_or_404(User, pk=payload.get('user_id'))
+        user = request.user
         serializer = UserLikeCommentSerializer(instance=user)
 
         return response.http_200(serializer.data)

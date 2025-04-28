@@ -4,12 +4,13 @@ from django.shortcuts import get_object_or_404
 from django.core.paginator import Paginator
 from .serializers import PostSerializer, PostDetailSerializer, PostListSerializer, CommentSerializer, PostCommentSerializer
 from common import response
-from accounts import jwt_handler
-from accounts.models import User
+from accounts.authentication import JWTAuthentication
 from .models import Post, Comment, PostLike, CommentLike
 
 
 class PostView(APIView):
+    authentication_classes = [JWTAuthentication]
+
     def get(self, request):
         posts_instance = Post.objects.filter().order_by('-created_at')   # 게시글 인스턴스 리스트 조회
 
@@ -25,10 +26,7 @@ class PostView(APIView):
         return response.http_200(result)
 
     def post(self, request):
-        access_token = request.headers.get('Authorization', None)       # 회원 인증 및 User 인스턴스 조회
-        payload = jwt_handler.decode_token(access_token)
-        user = get_object_or_404(User, pk=payload.get('user_id'))
-
+        user = request.user                                             # 회원 인증 및 User 인스턴스 조회
         post_serializer = PostSerializer(data=request.data)             # 데이터 유효성 검사
 
         if post_serializer.is_valid(raise_exception=True):
@@ -75,11 +73,10 @@ class PostDetailView(APIView):
 
 
 class CommentView(APIView):
-    def post(self, request):
-        access_token = request.headers.get('Authorization', None)       # 회원 인증 및 User 인스턴스 조회
-        payload = jwt_handler.decode_token(access_token)
-        user = get_object_or_404(User, pk=payload.get('user_id'))
+    authentication_classes = [JWTAuthentication]
 
+    def post(self, request):
+        user = request.user                                             # 회원 인증 및 User 인스턴스 조회
         comment_serializer = CommentSerializer(data=request.data)       # 데이터 유효성 검사
 
         if comment_serializer.is_valid(raise_exception=True):
@@ -113,11 +110,10 @@ class CommentDetailView(APIView):
 
 
 class PostLikeView(APIView):
-    def post(self, request, post_id):
-        access_token = request.headers.get('Authorization', None)       # 회원 인증 및 User 인스턴스 조회
-        payload = jwt_handler.decode_token(access_token)
-        user = get_object_or_404(User, pk=payload.get('user_id'))
+    authentication_classes = [JWTAuthentication]
 
+    def post(self, request, post_id):
+        user = request.user                                             # 회원 인증 및 User 인스턴스 조회
         post_instance = get_object_or_404(Post, pk=post_id)             # 게시글 인스턴스 조회
 
         post_like, created = PostLike.objects.get_or_create(user=user, post=post_instance)   # 게시글좋아요 인스턴스 조회 or 생성
@@ -131,11 +127,10 @@ class PostLikeView(APIView):
 
 
 class CommentLikeView(APIView):
-    def post(self, request, comment_id):
-        access_token = request.headers.get('Authorization', None)       # 회원 인증 및 User 인스턴스 조회
-        payload = jwt_handler.decode_token(access_token)
-        user = get_object_or_404(User, pk=payload.get('user_id'))
+    authentication_classes = [JWTAuthentication]
 
+    def post(self, request, comment_id):
+        user = request.user                                             # 회원 인증 및 User 인스턴스 조회
         comment_instance = get_object_or_404(Comment, pk=comment_id)    # 댓글 인스턴스 조회
 
         comment_like, created = CommentLike.objects.get_or_create(user=user, comment=comment_instance)   # 댓글좋아요 인스턴스 조회 or 생성
