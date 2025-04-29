@@ -10,7 +10,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, Toke
 from rest_framework_simplejwt.views import TokenRefreshView
 from .models import User, UserProfile, AuthTable
 from .serializers import SignUpSerializer, KakaoSignUpSerializer, UserProfileSerializer, UserSerializer, \
-    UserIdSerializer, NicknameSerializer, PhoneNumSerializer, AuthTableSerializer,  \
+    UserIdSerializer, NicknameSerializer, PhoneNumberValidateSerializer, AuthTableSerializer,  \
     UserWritePostSerializer, UserWriteCommentSerializer, UserLikePostSerializer, UserLikeCommentSerializer
 from sms import coolsms
 from common import response
@@ -259,52 +259,38 @@ class PasswordResetConfirmView(APIView):
 
 
 # -- 전화번호 인증  -- #
-class AuthPhoneNumber(APIView):
+class PhoneVerificationView(APIView):
     def post(self, request):
-        phone_serializer = PhoneNumSerializer(data=request.data)  # 데이터 유효성 검사
-        if phone_serializer.is_valid(raise_exception=True):
-            phone = phone_serializer.validated_data['phone']
-            code = create_code()
+        phone = request.data['phone']
+        code = create_code()
 
+        serializer = PhoneNumberValidateSerializer(data=request.data)
+        if serializer.is_valid(raise_exception=True):
             AuthTable.objects.create(phone=phone, code=code)
-            coolsms.send_sms_code(SMS_API_KEY, SMS_API_SECRET, phone, code)  # 인증 코드 전송
 
-            return response.HTTP_200
+        coolsms.send_sms_code(SMS_API_KEY, SMS_API_SECRET, phone, code)  # 인증 코드 전송
+
+        return response.http_200('인증번호를 전송하였습니다.')
 
 
-# -- 이름 인증 -- #
-class AuthUserName(APIView):
+# -- 본인 인증 -- #
+class NamePhoneVerificationView(APIView):
     def post(self, request):
         name, phone = request.data['name'], request.data['phone']
 
-        if check_is_exists_name_phone(name, phone):
-            return response.HTTP_200
+        if UserProfile.objects.filter(name=name, phone=phone).exists():
+            coolsms.send_sms_code(phone)
         else:
-            return response.HTTP_400
-
-
-# -- 아이디 인증 -- #
-class AuthUserId(APIView):
-    def post(self, request):
-        username, phone = request.data['username'], request.data['phone']
-
-        if check_is_exists_username_phone(username, phone):
-            return response.HTTP_200
-        else:
-            return response.HTTP_400
+            return response.http_400('회원이 존재하지 않습니다.')
 
 
 # -- 인증번호 확인 -- #
-class AuthVerify(APIView):
+class VerificationCodeConfirmView(APIView):
     def post(self, request):
-        phone = request.data["phone"]
-        code = request.data["code"]
+        phone, code = request.data["phone"], request.data["code"]
 
-        # 현재 시간 체크
         current_time = datetime.now()
-
-        # 인증 데이터 조회
-        auth_instance = AuthTable.objects.filter(phone=phone).order_by('-created_at').first()
+        auth_instance = AuthTable.objects.filter(phone=phone).order_by('-created_at').first()   # 인증 데이터 조회
 
         if auth_instance is None:
             return response.http_404("전화번호가 존재하지 않습니다.")

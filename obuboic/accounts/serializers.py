@@ -89,7 +89,7 @@ class UserTermsSeriailzer(serializers.ModelSerializer):
         fields = ['is_consent']
 
 
-class PhoneNumSerializer(serializers.ModelSerializer):
+class PhoneNumberValidateSerializer(serializers.ModelSerializer):
     class Meta:
         model = AuthTable
         fields = ['phone']

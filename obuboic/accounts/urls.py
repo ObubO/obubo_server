@@ -26,10 +26,9 @@ urlpatterns = [
     path('users/like/posts', views.UserLikePost.as_view()),                 # 좋아요한 게시글 조회
     path('users/like/comments', views.UserLikeComment.as_view()),           # 좋아요한 댓글 조회
 
-    path('verify/phone', views.AuthPhoneNumber.as_view()),        # 전화번호 인증
-    path('verify/name-phone', views.AuthUserName.as_view()),      # 이름 및 전화번호 인증
-    path('verify/id-phone', views.AuthUserId.as_view()),          # 아이디 및 전화번호 인증
+    path('verifications/phone', views.PhoneVerificationView.as_view()),        # 전화번호 인증
+    path('verifications/name-phone', views.NamePhoneVerificationView.as_view()),      # 이름 및 전화번호 인증
 
-    path('validate/code', views.AuthVerify.as_view()),   # 인증번호 확인
+    path('verifications/code', views.VerificationCodeConfirmView.as_view()),   # 인증번호 확인
 
 ]
