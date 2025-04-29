@@ -9,35 +9,34 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 from rest_framework_simplejwt.views import TokenRefreshView
 from .models import User, UserProfile, AuthTable
-from .serializers import SignUpSerializer, KakaoSignUpSerializer, UserProfileSerializer, PasswordSerializer, \
+from .serializers import SignUpSerializer, KakaoSignUpSerializer, UserProfileSerializer, UserSerializer, \
     UserIdSerializer, NicknameSerializer, PhoneNumSerializer, AuthTableSerializer,  \
     UserWritePostSerializer, UserWriteCommentSerializer, UserLikePostSerializer, UserLikeCommentSerializer
-from sms import message
+from sms import coolsms
 from common import response
 from .oauth import kakao
 
 from .authentication import JWTAuthentication
 
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes
+
 SECRET_KEY = getattr(settings, 'SECRET_KEY', 'SECRET_KEY')
 SMS_API_KEY = getattr(settings, "SMS_API_KEY")
 SMS_API_SECRET = getattr(settings, "SMS_API_SECRET")
+PASSWORD_RESET_URL = "https://nursinghome.ai/user/password-reset"
 
 
-def send_auth_code(phone):
-    try:
-        code = str(random.randint(100000, 999999))          # 인증코드 생성 및 저장
-        AuthTable.objects.create(phone=phone, code=code)
-
-        message.send_sms(SMS_API_KEY, SMS_API_SECRET, phone, code)   # 인증 코드 전송
-
-    except Exception as e:
-        raise Exception(e)
+def create_code():
+    code = str(random.randint(100000, 999999))  # 인증코드 생성 및 저장
+    return code
 
 
 def check_is_exists_name_phone(name, phone):
     user_profile_exists = UserProfile.objects.filter(name=name, phone=phone).exists()
     if user_profile_exists:
-        send_auth_code(phone)
+        coolsms.send_sms_code(phone)
         return True
     else:
         return False
@@ -46,7 +45,7 @@ def check_is_exists_name_phone(name, phone):
 def check_is_exists_username_phone(username, phone):
     user_instance = get_object_or_404(User, username=username)
     if user_instance.user_profile.phone == phone:
-        send_auth_code(phone)
+        coolsms.send_sms_code(phone)
         return True
     else:
         return False
@@ -191,8 +190,10 @@ class CustomTokenRefreshView(TokenRefreshView):
 # -- 아이디 찾기 -- #
 class FindUsernameView(APIView):
     def post(self, request):
+        name = request.data['name']
         phone = request.data['phone']
-        user_profile = get_object_or_404(UserProfile, phone=phone)
+
+        user_profile = get_object_or_404(UserProfile, name=name, phone=phone)
         user = user_profile.user
 
         result = {"id": user.username, "date": user.created_at}
@@ -200,48 +201,75 @@ class FindUsernameView(APIView):
         return response.http_200(result)
 
 
-# -- 비밀번호 관리 -- #
-class PasswordView(APIView):
-    # 비밀번호 검증
-    def post(self, request):
-        username, password = request.data['username'], request.data['password']
+# -- 비밀번호 확인 -- #
+class PasswordConfirmView(APIView):
+    authentication_classes = [JWTAuthentication]
 
-        user = get_object_or_404(User, username=username)
+    def post(self, request):
+        user = request.user
+        password = request.data['password']
 
         if user.check_password(password):
             return response.HTTP_200
         else:
             return response.HTTP_400
 
-    # 비밀번호 변경
-    def patch(self, request):
-        username, new_password = request.data['username'], request.data['password']
 
-        user = get_object_or_404(User, username=username)
+# -- 비밀번호 재설정 요청-- #
+class PasswordResetRequestView(APIView):
+    def post(self, request):
+        phone = request.data['phone']
+        user_profile = get_object_or_404(UserProfile, phone=phone)
+        if not user_profile:
+            return response.http_400("해당 전화번호로 가입한 사용자가 없습니다.")
 
-        serializer = PasswordSerializer(data=request.data)
-        if serializer.is_valid(raise_exception=True):
-            user.set_password(new_password)
-            user.save()
+        user = user_profile.user
 
-        return response.HTTP_200
+        token_generator = PasswordResetTokenGenerator()
+        token = token_generator.make_token(user)
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+
+        reset_link = f"{PASSWORD_RESET_URL}/{uid}/{token}"
+        coolsms.send_sms_link(SMS_API_KEY, SMS_API_SECRET, phone, reset_link)
+
+        return response.http_200(reset_link)
+
+
+# -- 비밀번호 재설정 -- #
+class PasswordResetConfirmView(APIView):
+    def post(self, request, uidb64, token):
+        password = request.data.get("password")
+        if not password:
+            return response.http_400("새 비밀번호를 입력해주세요.")
+
+        try:
+            uid = urlsafe_base64_decode(uidb64).decode()
+            user = User.objects.get(pk=uid)
+        except (ValueError, TypeError):
+            return response.http_400("잘못된 요청입니다.")
+
+        token_generator = PasswordResetTokenGenerator()
+        if not token_generator.check_token(user, token):
+            return response.http_400("유효하지 않은 토큰입니다.")
+
+        user.set_password(password)
+        user.save()
+
+        return response.http_200("비밀번호가 성공적으로 변경되었습니다.")
 
 
 # -- 전화번호 인증  -- #
 class AuthPhoneNumber(APIView):
     def post(self, request):
-        # 데이터 유효성 검사
-        phone_serializer = PhoneNumSerializer(data=request.data)
+        phone_serializer = PhoneNumSerializer(data=request.data)  # 데이터 유효성 검사
+        if phone_serializer.is_valid(raise_exception=True):
+            phone = phone_serializer.validated_data['phone']
+            code = create_code()
 
-        try:
-            phone_serializer.is_valid(raise_exception=True)
-            phone = phone_serializer.validated_data["phone"]
-            send_auth_code(phone)
+            AuthTable.objects.create(phone=phone, code=code)
+            coolsms.send_sms_code(SMS_API_KEY, SMS_API_SECRET, phone, code)  # 인증 코드 전송
 
             return response.HTTP_200
-
-        except Exception as e:
-            return response.http_400(str(e))
 
 
 # -- 이름 인증 -- #
