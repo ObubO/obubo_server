@@ -58,14 +58,7 @@ def generate_password(length=12):
 
 
 # -- 회원가입 -- #
-class UserCreateView(APIView):
-    # 중복 아이디 확인
-    def get(self, request, username):
-        serializer = UserIdSerializer(data={'username': username})
-        if serializer.is_valid(raise_exception=True):
-            return response.HTTP_200
-
-    # 회원가입
+class UserSignupView(APIView):
     def post(self, request):
         serializer = SignUpSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
@@ -73,8 +66,14 @@ class UserCreateView(APIView):
             return response.HTTP_201
 
 
-# 닉네임 중복 확인
-class CheckNickname(APIView):
+class UserIdCheckView(APIView):
+    def get(self, request, username):
+        serializer = UserIdSerializer(data={'username': username})
+        if serializer.is_valid(raise_exception=True):
+            return response.HTTP_200
+
+
+class UserNicknameCheckView(APIView):
     def get(self, request, nickname):
         serializer = NicknameSerializer(data={'nickname': nickname})
         if serializer.is_valid(raise_exception=True):
@@ -111,7 +110,7 @@ class UserProfileView(APIView):
 
 
 # 계정 로그인 API
-class LoginView(APIView):
+class UserLoginView(APIView):
     authentication_classes = [JWTAuthentication]
 
     def post(self, request):
@@ -139,7 +138,7 @@ class LoginView(APIView):
 
 
 # 계정 로그아웃 API
-class LogoutView(APIView):
+class UserLogoutView(APIView):
     authentication_classes = [JWTAuthentication]
 
     def post(self, request):
@@ -151,7 +150,7 @@ class LogoutView(APIView):
 
 
 # 회원 탈퇴 API
-class WithdrawalView(APIView):
+class UserWithdrawalView(APIView):
     authentication_classes = [JWTAuthentication]
 
     def post(self, request):
@@ -162,7 +161,7 @@ class WithdrawalView(APIView):
 
 
 # AccessToken 재발급 API
-class CustomTokenRefreshView(TokenRefreshView):
+class UserTokenRefreshView(TokenRefreshView):
     authentication_classes = [JWTAuthentication]
 
     def post(self, request):
@@ -188,7 +187,7 @@ class CustomTokenRefreshView(TokenRefreshView):
 
 
 # -- 아이디 찾기 -- #
-class FindUsernameView(APIView):
+class UserFindIdView(APIView):
     def post(self, request):
         name = request.data['name']
         phone = request.data['phone']
@@ -202,7 +201,7 @@ class FindUsernameView(APIView):
 
 
 # -- 비밀번호 확인 -- #
-class PasswordConfirmView(APIView):
+class UserPasswordConfirmView(APIView):
     authentication_classes = [JWTAuthentication]
 
     def post(self, request):
@@ -216,7 +215,7 @@ class PasswordConfirmView(APIView):
 
 
 # -- 비밀번호 재설정 요청-- #
-class PasswordResetRequestView(APIView):
+class UserPasswordResetRequestView(APIView):
     def post(self, request):
         phone = request.data['phone']
         user_profile = get_object_or_404(UserProfile, phone=phone)
@@ -236,7 +235,7 @@ class PasswordResetRequestView(APIView):
 
 
 # -- 비밀번호 재설정 -- #
-class PasswordResetConfirmView(APIView):
+class UserPasswordResetConfirmView(APIView):
     def post(self, request, uidb64, token):
         password = request.data.get("password")
         if not password:
@@ -390,7 +389,7 @@ class KakaoCallbackSignup(APIView):
         return HttpResponseRedirect(redirect_uri)
 
 
-class UserWritePost(APIView):
+class UserWritePostView(APIView):
     authentication_classes = [JWTAuthentication]
 
     def get(self, request):
@@ -400,7 +399,7 @@ class UserWritePost(APIView):
         return response.http_200(serializer.data)
 
 
-class UserWriteComment(APIView):
+class UserWriteCommentView(APIView):
     authentication_classes = [JWTAuthentication]
 
     def get(self, request):
@@ -410,7 +409,7 @@ class UserWriteComment(APIView):
         return response.http_200(serializer.data)
 
 
-class UserLikePost(APIView):
+class UserLikePostView(APIView):
     authentication_classes = [JWTAuthentication]
 
     def get(self, request):
@@ -420,7 +419,7 @@ class UserLikePost(APIView):
         return response.http_200(serializer.data)
 
 
-class UserLikeComment(APIView):
+class UserLikeCommentView(APIView):
     authentication_classes = [JWTAuthentication]
 
     def get(self, request):

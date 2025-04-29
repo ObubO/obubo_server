@@ -2,33 +2,41 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('signup', views.UserCreateView.as_view()),         # 회원가입
-    path('login', views.LoginView.as_view()),               # 로그인
-    path('logout', views.LogoutView.as_view()),             # 로그아웃
-    path('withdrawal', views.WithdrawalView.as_view()),     # 회원탈퇴
+    # 회원가입/로그인
+    path('users/signup', views.UserSignupView.as_view()),             # POST: 회원가입
+    path('users/login', views.UserLoginView.as_view()),               # POST: 로그인
+    path('users/logout', views.UserLogoutView.as_view()),             # POST: 로그아웃
+    path('users/withdrawal', views.UserWithdrawalView.as_view()),     # POST: 회원탈퇴
 
-    path('kakao/auth', views.KakaoAuth.as_view()),               # 간편(카카오) 로그인 인증(인가코드 발급) 요청
-    path('kakao/callback', views.KakaoCallback.as_view()),       # 간편(카카오) 로그인 인가코드 redirect 및 로그인 처리
-    path('kakao/signup', views.KakaoSignUp.as_view()),                      # 간편(카카오) 회원가입 인증(인가코드 발급) 요청 / 회원가입 처리
-    path('kakao/callback/signup', views.KakaoCallbackSignup.as_view()),     # 간편(카카오) 회원가입 인가코드 redirect url / 회원가입 처리
-    path('check/id/<str:username>', views.UserCreateView.as_view()),        # 회원가입 시 아이디 유효성 확인
-    path('check/nickname/<str:nickname>', views.CheckNickname.as_view()),   # 회원가입 시 닉네임 유효성 확인
+    # 회원가입 검증
+    path('users/check-username/<str:username>', views.UserIdCheckView.as_view()),         # GET: 아이디 중복 검사
+    path('users/check-nickname/<str:nickname>', views.UserNicknameCheckView.as_view()),   # GET: 닉네임 중복 검사
 
-    path('users/profile', views.UserProfileView.as_view()),                # 회원정보 조회 및 수정
-    path('users/id', views.FindUsernameView.as_view()),                      # 아이디 찾기
-    path('users/password-confirm', views.PasswordConfirmView.as_view()),     # 비밀번호 검증
-    path('users/password-reset', views.PasswordResetRequestView.as_view()),  # 비밀번호 재설정 요청
-    path('users/password-reset/<str:uidb64>/<str:token>', views.PasswordResetConfirmView.as_view()),  # 비밀번호 재설정
+    # 사용자 프로필
+    path('users/profile', views.UserProfileView.as_view()),                                               # GET: 회원정보 조회 / PATCH: 회원정보 수정
+    path('users/find-id', views.UserFindIdView.as_view()),                                                # POST: 아이디 찾기
+    path('users/password-confirm', views.UserPasswordConfirmView.as_view()),                              # POST: 비밀번호 확인
+    path('users/password-reset', views.UserPasswordResetRequestView.as_view()),                           # POST: 비밀번호 재설정 요청
+    path('users/password-reset/<str:uidb64>/<str:token>', views.UserPasswordResetConfirmView.as_view()),  # POST: 비밀번호 재설정 처리
 
-    path('users/token/refresh', views.CustomTokenRefreshView.as_view()),    # access_token 재발급
-    path('users/write/posts', views.UserWritePost.as_view()),               # 작성한 게시글 조회
-    path('users/write/comments', views.UserWriteComment.as_view()),         # 작성한 댓글 조회
-    path('users/like/posts', views.UserLikePost.as_view()),                 # 좋아요한 게시글 조회
-    path('users/like/comments', views.UserLikeComment.as_view()),           # 좋아요한 댓글 조회
+    # 사용자 활동 조회
+    path('users/write/posts', views.UserWritePostView.as_view()),         # GET: 내가 쓴 게시글 조회
+    path('users/write/comments', views.UserWriteCommentView.as_view()),   # GET: 내가 쓴 댓글 조회
+    path('users/like/posts', views.UserLikePostView.as_view()),           # GET: 좋아요한 게시글
+    path('users/like/comments', views.UserLikeCommentView.as_view()),     # GET: 좋아요한 댓글
 
-    path('verifications/phone', views.PhoneVerificationView.as_view()),        # 전화번호 인증
-    path('verifications/name-phone', views.NamePhoneVerificationView.as_view()),      # 이름 및 전화번호 인증
+    # 인증
+    path('verifications/phone', views.PhoneVerificationView.as_view()),            # POST: 전화번호 인증
+    path('verifications/name-phone', views.NamePhoneVerificationView.as_view()),   # POST: 이름+전화번호 인증
+    path('verifications/code', views.VerificationCodeConfirmView.as_view()),       # POST: 인증번호 확인
 
-    path('verifications/code', views.VerificationCodeConfirmView.as_view()),   # 인증번호 확인
+    # 토큰
+    path('users/token/refresh', views.UserTokenRefreshView.as_view()),        # POST: access_token 재발급
+
+    # 카카오 로그인
+    path('auth/kakao/login', views.KakaoAuth.as_view()),                      # GET: 카카오 로그인 인가코드 요청
+    path('auth/kakao/login/callback', views.KakaoCallback.as_view()),         # GET: 카카오 로그인 인가코드 콜백 및 로그인
+    path('auth/kakao/signup', views.KakaoSignUp.as_view()),                   # GET: 카카오 회원가입 인가코드 요청 / POST: 회원가입 처리
+    path('auth/kakao/signup/callback', views.KakaoCallbackSignup.as_view()),  # GET: 카카오 회원가입 인가코드 콜백
 
 ]
