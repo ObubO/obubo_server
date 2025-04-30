@@ -28,27 +28,9 @@ SMS_API_SECRET = getattr(settings, "SMS_API_SECRET")
 PASSWORD_RESET_URL = "https://nursinghome.ai/user/password-reset"
 
 
-def create_code():
+def generate_code():
     code = str(random.randint(100000, 999999))  # 인증코드 생성 및 저장
     return code
-
-
-def check_is_exists_name_phone(name, phone):
-    user_profile_exists = UserProfile.objects.filter(name=name, phone=phone).exists()
-    if user_profile_exists:
-        coolsms.send_sms_code(phone)
-        return True
-    else:
-        return False
-
-
-def check_is_exists_username_phone(username, phone):
-    user_instance = get_object_or_404(User, username=username)
-    if user_instance.user_profile.phone == phone:
-        coolsms.send_sms_code(phone)
-        return True
-    else:
-        return False
 
 
 def generate_password(length=12):
@@ -261,7 +243,7 @@ class UserPasswordResetConfirmView(APIView):
 class PhoneVerificationView(APIView):
     def post(self, request):
         phone = request.data['phone']
-        code = create_code()
+        code = generate_code()
 
         serializer = PhoneNumberValidateSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
