@@ -6,12 +6,13 @@ from django.shortcuts import get_object_or_404
 from django.contrib.auth import authenticate
 from django.conf import settings
 from rest_framework.views import APIView
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenRefreshView
 from .models import User, UserProfile, AuthTable
 from .serializers import SignUpSerializer, KakaoSignUpSerializer, UserProfileSerializer, UserSerializer, \
     UserIdSerializer, NicknameSerializer, PhoneNumberValidateSerializer, AuthTableSerializer,  \
-    UserWritePostSerializer, UserWriteCommentSerializer, UserLikePostSerializer, UserLikeCommentSerializer
+    UserWritePostSerializer, UserWriteCommentSerializer, UserLikePostSerializer, UserLikeCommentSerializer, \
+    SecureTokenRefreshSerializer, CustomTokenObtainPairSerializer
 from sms import coolsms
 from common import response
 from .oauth import kakao
@@ -21,6 +22,8 @@ from .authentication import JWTAuthentication
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes
+
+from django.contrib.auth.models import update_last_login
 
 SECRET_KEY = getattr(settings, 'SECRET_KEY', 'SECRET_KEY')
 SMS_API_KEY = getattr(settings, "SMS_API_KEY")
@@ -98,25 +101,21 @@ class UserLoginView(APIView):
     def post(self, request):
         username = request.data.get("username")
         password = request.data.get("password")
-
         if not username or not password:
-            return response.http_400("아이디와 비밀번호를 입력해주세요.")
+            return response.http_400("아이디/비밀번호를 입력해주세요.")
 
         user = authenticate(username=username, password=password)
         if user is None:
             return response.http_400("회원정보가 올바르지 않습니다.")
 
-        token = TokenObtainPairSerializer.get_token(user)   # JWT 토큰 발급
-        access_token = str(token.access_token)
-        refresh_token = str(token)
+        serializer = CustomTokenObtainPairSerializer(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            token = serializer.validated_data
 
-        user.refresh_token = refresh_token          # refresh token 업데이트
-        user.last_login = datetime.now()            # 마지막 로그인 시각 업데이트
-        user.save(update_fields=["refresh_token", "last_login"])
+            update_last_login(None, user)
+            user.update_refresh_token(token['refresh'])
 
-        result = {"token": {"access": access_token, "refresh": refresh_token}}
-
-        return response.http_200(result)
+            return response.http_200({"token": token})
 
 
 # 계정 로그아웃 API
@@ -125,8 +124,7 @@ class UserLogoutView(APIView):
 
     def post(self, request):
         user = request.user
-        user.refresh_token = None
-        user.save(update_fields=["refresh_token"])
+        user.update_refresh_token(None)
 
         return response.HTTP_200
 
@@ -144,28 +142,16 @@ class UserWithdrawalView(APIView):
 
 # AccessToken 재발급 API
 class UserTokenRefreshView(TokenRefreshView):
-    authentication_classes = [JWTAuthentication]
+    def post(self, request, **kwargs):
+        refresh_token = request.data.get('refresh')
+        if not refresh_token:
+            return response.http_400('refresh token이 필요합니다.')
 
-    def post(self, request):
-        refresh_token = request.headers.get('Authorization', None)  # 토큰 조회
-        user = request.user
+        serializer = SecureTokenRefreshSerializer(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            token = serializer.validated_data
 
-        # -- 탈취당한 Refresh Token 여부 -- #
-        # 정상적 요청인 경우
-        if refresh_token == user.refresh_token:
-            data = {'refresh': refresh_token}
-            token_serializer = TokenRefreshSerializer(data=data)
-
-            if token_serializer.is_valid():
-                access_token = token_serializer.validated_data
-                result = {"token": access_token}
-                return response.http_200(result)
-            else:
-                return response.http_503("서버 에러 발생")
-
-        # 공격시도 감지
-        else:
-            return response.http_403("사용자가 삭제한 토큰입니다.")
+            return response.http_200({"token": token})
 
 
 # -- 아이디 찾기 -- #

@@ -4,6 +4,10 @@ from django.shortcuts import get_object_or_404
 from .models import UserType, User, UserProfile, Terms, UserTerms, AuthTable
 from community.serializers import PostSerializer, CommentSerializer
 from common import functions
+from rest_framework_simplejwt.serializers import TokenRefreshSerializer, TokenObtainPairSerializer
+from rest_framework_simplejwt.tokens import RefreshToken, TokenError
+from django.contrib.auth import get_user_model
+from rest_framework import serializers
 
 
 class MemberTypeSerializer(serializers.ModelSerializer):
@@ -284,3 +288,52 @@ class UserLikeCommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['like_comments']
+
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        # 여기서 payload 커스터마이징도 가능 (ex. token['username'] = user.username)
+        return token
+
+    def validate(self, attrs):
+        data = super().validate(attrs)
+
+        refresh = self.get_token(self.user)
+
+        data["refresh"] = str(refresh)
+        data["access"] = str(refresh.access_token)
+
+        return data
+
+
+class SecureTokenRefreshSerializer(TokenRefreshSerializer):
+    def update(self, instance, validated_data):
+        pass
+
+    def create(self, validated_data):
+        pass
+
+    def validate(self, attrs):
+        refresh_token = attrs.get("refresh")
+
+        try:
+            # 1. refresh 토큰 디코드
+            token = RefreshToken(refresh_token)
+            user_id = token.payload.get("user_id")
+
+            # 2. 사용자 조회
+            user = get_object_or_404(User, pk=user_id)
+
+            # 3. 추가 보안 로직: DB의 refresh_token과 비교
+            if user.refresh_token != refresh_token:
+                raise serializers.ValidationError("refresh token이 일치하지 않습니다.")
+
+        except TokenError:
+            raise serializers.ValidationError("유효하지 않은 refresh token입니다.")
+
+        # 4. access token 재발급
+        access_token = super().validate(attrs)
+
+        return access_token

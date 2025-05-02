@@ -78,6 +78,14 @@ class User(AbstractBaseUser, PermissionsMixin):
     def is_staff(self):
         return self.is_admin
 
+    def update_refresh_token(self, refresh):
+        """
+        A signal receiver which updates the last_login date for
+        the user logging in.
+        """
+        self.refresh_token = refresh
+        self.save(update_fields=["refresh_token"])
+
 
 class UserType(models.Model):
     name = models.CharField(verbose_name='회원유형', max_length=10)
