@@ -48,7 +48,7 @@ class UserProfileAdmin(admin.ModelAdmin):
 
 @admin.register(UserType)
 class UserTypeAdmin(admin.ModelAdmin):
-    fields = ['id', 'name', ]
+    fields = ['name', ]
     list_display = ('id', 'name', )
 
 
