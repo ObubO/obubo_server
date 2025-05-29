@@ -52,7 +52,7 @@ class UserManger(BaseUserManager):
 
 class User(AbstractBaseUser, PermissionsMixin):
     username_validator = UnicodeUsernameValidator()
-    username = models.CharField(verbose_name='아이디', max_length=20, unique=True, validators=[validate_id])
+    username = models.CharField(verbose_name='아이디', max_length=50, unique=True, validators=[validate_id])
     password = models.CharField(verbose_name='비밀번호', max_length=255, validators=[validate_password])
     refresh_token = models.CharField(verbose_name='refresh_token', max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

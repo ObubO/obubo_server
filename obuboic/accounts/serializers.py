@@ -1,12 +1,9 @@
 from datetime import datetime
-from rest_framework import serializers
 from django.shortcuts import get_object_or_404
 from .models import UserType, User, UserProfile, Terms, UserTerms, AuthTable
 from community.serializers import PostSerializer, CommentSerializer
-from common import functions
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer, TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
-from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 
@@ -41,7 +38,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
     def create(self, validated_data, user=None, user_type=None):
         if user is None:
             raise ValueError("User instance must be provided")
-        validated_email = self.get_validated_email(validated_data["email"])
+
+        email = self.get_validated_email(validated_data["email"])
 
         user_profile = UserProfile(
             user=user,
@@ -51,7 +49,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             gender=validated_data["gender"],
             birth=validated_data["birth"],
             phone=validated_data["phone"],
-            email=validated_email,
+            email=email,
         )
 
         return user_profile
@@ -108,7 +106,6 @@ class AuthTableSerializer(serializers.ModelSerializer):
 class SignUpSerializer(serializers.ModelSerializer):
     username = serializers.CharField(required=True)
     password = serializers.CharField(required=True)
-    # email = serializers.EmailField(required=True, allow_blank=True)
     typeNo = serializers.IntegerField(required=True)
     terms1 = serializers.BooleanField(required=True)
     terms2 = serializers.BooleanField(required=True)
@@ -122,41 +119,45 @@ class SignUpSerializer(serializers.ModelSerializer):
                   'terms1', 'terms2', 'terms3', 'terms4', ]
 
     def create(self, validated_data):
-        user = self._create_user(validated_data)
-        user_profile = self._create_user_profile(user, validated_data)
-        self._create_user_terms(user, validated_data)
+        user = None
+        user_profile = None
+
+        try:
+            user = self._create_user(validated_data)
+            user_profile = self._create_user_profile(validated_data, user)
+            self._create_user_terms(validated_data, user)
+
+        except Exception as e:
+            if user_profile:
+                user_profile.delete()
+            if user:
+                user.delete()
+
+            raise ValueError(f'error: 계정 생성 에러, error_descrption: {str(e)}')
+
         return user_profile
 
     def _create_user(self, validated_data):
-        user_data = {'username': validated_data['username'], 'password': validated_data['password']}
-        user_serializer = UserSerializer(data=user_data)
-        user_serializer.is_valid(raise_exception=True)
-        return user_serializer.save()
+        user_serializer = UserSerializer(data=validated_data)
 
-    def _create_user_profile(self, user, validated_data):
-        type_code = validated_data['typeNo']
-        user_type = get_object_or_404(UserType, id=type_code)
+        if user_serializer.is_valid(raise_exception=True):
+            user = user_serializer.save()
 
-        # 회원 정보(Member) 인스턴스 생성
-        user_profile_data = {
-            'name': validated_data["name"],
-            'nickname': validated_data["nickname"],
-            'gender': validated_data["gender"],
-            'birth': validated_data["birth"],
-            'phone': validated_data["phone"],
-            'email': validated_data["email"],
-        }
+            return user
 
-        user_profile_serializer = UserProfileSerializer(data=user_profile_data)
+    def _create_user_profile(self, validated_data, user):
+        user_type = get_object_or_404(UserType, id=validated_data['typeNo'])
+        user_profile_serializer = UserProfileSerializer(data=validated_data)
 
         if user_profile_serializer.is_valid(raise_exception=True):
             user_profile = user_profile_serializer.create(validated_data, user, user_type)
             user_profile.save()
+
             return user_profile
 
-    def _create_user_terms(self, user, validated_data):
-        # 약관동의 인스턴스 생성
+    def _create_user_terms(self, validated_data, user):
         terms_list = Terms.objects.all()
+
         for terms in terms_list:
             terms_name = 'terms' + str(terms.id)
             validated_terms = validated_data[terms_name]
@@ -170,6 +171,8 @@ class SignUpSerializer(serializers.ModelSerializer):
 
 class KakaoSignUpSerializer(serializers.ModelSerializer):
     name = serializers.CharField(required=True)
+    nickname = serializers.CharField(required=True)
+    typeNo = serializers.IntegerField(required=True)
     terms1 = serializers.BooleanField(required=True)
     terms2 = serializers.BooleanField(required=True)
     terms3 = serializers.BooleanField(required=True)
@@ -177,76 +180,66 @@ class KakaoSignUpSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['username', 'password', 'name',
-                  'terms1', 'terms2', 'terms3', 'terms4', ]
+        fields = ['username', 'password', 'name', 'nickname', 'typeNo', 'terms1', 'terms2', 'terms3', 'terms4', ]
 
     def create(self, validated_data):
-        # 회원 관리(User) 인스턴스 생성
-        user_data = {'username': validated_data['username'], 'password': validated_data['password'], 'is_social': True}
-        user_serializer = UserSerializer(data=user_data)
-        user_serializer.is_valid(raise_exception=True)
-        user = user_serializer.create(user_serializer.validated_data)
+        user = None
+        user_profile = None
 
-        # 닉네임 생성 및 중복 확인
-        while True:
-            nickname = functions.create_nickname()
-            if not UserProfile.objects.filter(nickname=nickname).exists():
-                break
+        try:
+            user = self._create_user(validated_data)
+            user_profile = self._create_user_profile(validated_data, user)
+            self._create_user_terms(validated_data, user)
 
-        # 회원 정보(Member) 인스턴스 생성
-        user_profile_data = {'name': validated_data['name'], 'nickname': nickname, 'gender': None, 'birth': None, 'phone': None, 'email': None}
-        user_type = get_object_or_404(UserType, id=1)
+        except Exception as e:
+            if user_profile:
+                user_profile.delete()
+            if user:
+                user.delete()
 
-        user_profile_serializer = UserProfileSerializer(data=user_profile_data)
-        user_profile_serializer.is_valid(raise_exception=True)
-        user_profile = user_profile_serializer.create(user_profile_serializer.validated_data, user, user_type)
-        user_profile.save()
+            raise ValueError(f'error: 계정 생성 에러, error_descrption: {str(e)}')
 
-        # 약관동의 인스턴스 생성
-        terms_list = Terms.objects.all()
-        for terms in terms_list:
-            terms_name = 'terms' + str(terms.id)
-            validated_terms = validated_data[terms_name]
-            UserTerms.objects.create(
-                user=user,
-                terms=get_object_or_404(Terms, id=terms.id),
-                is_consent=validated_terms,
-                consent_date=datetime.now(),
-            )
-
-        return user
+        return user_profile
 
     def _create_user(self, validated_data):
-        user_data = {'username': validated_data['username'], 'password': validated_data['password']}
+        user_data = {
+            'username': validated_data['username'],
+            'password': validated_data['password'],
+        }
+
         user_serializer = UserSerializer(data=user_data)
-        user_serializer.is_valid(raise_exception=True)
-        return user_serializer.save()
 
-    def _create_user_profile(self, user, validated_data):
-        while True:
-            nickname = functions.create_nickname()
-            if not UserProfile.objects.filter(nickname=nickname).exists():
-                break  # 중복되지 않으면 루프 종료
+        if user_serializer.is_valid(raise_exception=True):
+            user = user_serializer.save()
+            user.is_social = True
+            user.save()
 
-        # 회원 정보(Member) 인스턴스 생성
+            return user
+
+    def _create_user_profile(self, validated_data, user):
+        user_type = get_object_or_404(UserType, id=validated_data['typeNo'])
+
         user_profile_data = {
             'name': validated_data['name'],
-            'nickname': nickname,
+            'nickname': validated_data['nickname'],
+            'user_type': user_type,
             'gender': None,
             'birth': None,
             'phone': None,
             'email': None,
         }
-        user_type = get_object_or_404(UserType, id=1)
+
         user_profile_serializer = UserProfileSerializer(data=user_profile_data)
+
         if user_profile_serializer.is_valid(raise_exception=True):
-            user_profile = user_profile_serializer.create(validated_data, user, user_type)
+            user_profile = user_profile_serializer.create(user_profile_serializer.validated_data, user, user_type)
             user_profile.save()
+
             return user_profile
 
-    def _create_user_terms(self, user, validated_data):
-        # 약관동의 인스턴스 생성
+    def _create_user_terms(self, validated_data, user):
         terms_list = Terms.objects.all()
+
         for terms in terms_list:
             terms_name = 'terms' + str(terms.id)
             validated_terms = validated_data[terms_name]
@@ -304,6 +297,17 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
         data["refresh"] = str(refresh)
         data["access"] = str(refresh.access_token)
+
+        return data
+
+    def generate_tokens_for_user(user):
+        refresh = RefreshToken.for_user(user)
+        access = refresh.access_token
+
+        data = {
+            "refresh": str(refresh),
+            "access": str(access),
+        }
 
         return data
 

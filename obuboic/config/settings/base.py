@@ -40,9 +40,6 @@ def get_secret(setting, secrets=secrets):
 
 
 SECRET_KEY = get_secret("SECRET_KEY")
-KAKAO_CLIENT_ID = get_secret("KAKAO_CLIENT_ID")
-KAKAO_CALLBACK_URI = get_secret("KAKAO_CALLBACK_URI")
-KAKAO_CALLBACK_URI_SIGNUP = get_secret("KAKAO_CALLBACK_URI_SIGNUP")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -251,5 +248,9 @@ LOGGING = {
     }
 }
 
+KAKAO_CLIENT_ID = get_secret("KAKAO_CLIENT_ID")
+KAKAO_LOGIN_CALLBACK_URI = get_secret("KAKAO_LOGIN_CALLBACK_URI")
+KAKAO_SIGNUP_CALLBACK_URI = get_secret("KAKAO_SIGNUP_CALLBACK_URI")
 SMS_API_KEY = get_secret('SMS_API_KEY')
 SMS_API_SECRET = get_secret("SMS_API_SECRET")
+GOV_SERVICE_LIST_FILE_ID = get_secret("GOV_SERVICE_LIST_FILE_ID")
