@@ -26,16 +26,16 @@ urlpatterns = [
     path('users/like/comments', views.UserLikeCommentView.as_view()),     # GET: 좋아요한 댓글
 
     # 인증
-    path('verifications/phone', views.PhoneVerificationView.as_view()),            # POST: 전화번호 인증
-    path('verifications/name-phone', views.NamePhoneVerificationView.as_view()),   # POST: 이름+전화번호 인증
-    path('verifications/code', views.VerificationCodeConfirmView.as_view()),       # POST: 인증번호 확인
+    path('verify/phone', views.PhoneVerificationView.as_view()),            # POST: 전화번호 인증
+    path('verify/name-phone', views.NamePhoneVerificationView.as_view()),   # POST: 이름+전화번호 인증
+    path('validate/code', views.VerificationCodeConfirmView.as_view()),       # POST: 인증번호 확인
 
     # 토큰
     path('users/token/refresh', views.UserTokenRefreshView.as_view()),        # POST: access_token 재발급
 
     # 카카오 로그인
-    path('kakao/login', views.KakaoLogin.as_view()),                     # GET: 카카오 로그인 인가코드 요청
-    path('kakao/login/callback', views.KakaoCallbackLogin.as_view()),    # GET: 카카오 로그인 인가코드 콜백 및 로그인
+    path('kakao/login', views.KakaoLogin.as_view()),                     # GET: 카카오 로그인 인가코드 요청 / POST: 로그인 처리
+    path('kakao/login/callback', views.KakaoCallbackLogin.as_view()),    # GET: 카카오 로그인 인가코드 콜백
     path('kakao/signup', views.KakaoSignUp.as_view()),                   # GET: 카카오 회원가입 인가코드 요청 / POST: 회원가입 처리
     path('kakao/signup/callback', views.KakaoCallbackSignup.as_view()),  # GET: 카카오 회원가입 인가코드 콜백
 

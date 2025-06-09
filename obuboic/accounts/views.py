@@ -291,25 +291,23 @@ class VerificationCodeConfirmView(APIView):
 
 
 class KakaoLogin(APIView):
+    def handle_kakao_login(self, user):
+        token = CustomTokenObtainPairSerializer.generate_tokens_for_user(user)  # 토큰 발급
+        update_last_login(None, user)  # 마지막 로그인 업데이트
+        user.update_refresh_token(token['refresh'])  # refresh 업데이트
+
+        return token
+
     def get(self, request):
         result = kakao.request_auth()           # 인가코드 요청
 
         return HttpResponseRedirect(result)
 
-
-class KakaoCallbackLogin(APIView):
-    def handle_kakao_login(self, user):
-        token = CustomTokenObtainPairSerializer.generate_tokens_for_user(user)     # 토큰 발급
-        update_last_login(None, user)                               # 마지막 로그인 업데이트
-        user.update_refresh_token(token['refresh'])                 # refresh 업데이트
-
-        return token
-
-    def get(self, request):
-        authorization_code = request.GET.get('code', None)
+    def post(self, request):
+        authorization_code = request.data.get('code', None)     # 인가코드 조회
 
         if authorization_code is None:
-            return response.http_400("인가코드 발급 에러")
+            return response.http_400("인가코드 조회 에러")
 
         kakao_token = kakao.request_token(authorization_code)  # 토큰 요청
         access_token = kakao_token.get("access_token")
@@ -329,6 +327,15 @@ class KakaoCallbackLogin(APIView):
         else:
             # 카카오싱크 도입 이후 회원가입 진행
             return response.http_400('회원가입을 진행해주세요.')
+
+
+class KakaoCallbackLogin(APIView):
+    def get(self, request):
+        authorization_code = request.GET.get('code', None)
+
+        redirect_uri = f'{kakao.KAKAO_LOGIN_302_REDIRECT_URI}?code={authorization_code}'
+
+        return HttpResponseRedirect(redirect_uri)
 
 
 class KakaoSignUp(APIView):
@@ -371,7 +378,7 @@ class KakaoCallbackSignup(APIView):
     def get(self, request):
         authorization_code = request.GET.get('code', None)
 
-        redirect_uri = f'{kakao.KAKAO_302_REDIRECT_URI}?code={authorization_code}'
+        redirect_uri = f'{kakao.KAKAO_SIGNUP_302_REDIRECT_URI}?code={authorization_code}'
 
         return HttpResponseRedirect(redirect_uri)
 
