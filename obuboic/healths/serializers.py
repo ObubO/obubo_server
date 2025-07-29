@@ -20,7 +20,7 @@ class CareGradeSimpleSerializer(serializers.ModelSerializer):
             data=validated_data["data"],
             gender=validated_data["gender"],
             age=validated_data["age"],
-            region=validated_data["region"],
+            # region=validated_data["region"],          정부 보조금 추천 기능 도입 후 삽입
         )
 
         return caregrade
@@ -37,7 +37,7 @@ class CareGradeDetailSerializer(serializers.ModelSerializer):
             data=validated_data["data"],
             gender=validated_data["gender"],
             age=validated_data["age"],
-            region=validated_data["region"],
+            # region=validated_data["region"],          정부 보조금 추천 기능 도입 후 삽입
         )
 
         return caregrade
