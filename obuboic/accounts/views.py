@@ -110,7 +110,6 @@ class UserProfileView(APIView):
 
 # 계정 로그인 API
 class UserLoginView(APIView):
-    authentication_classes = [JWTAuthentication]
 
     def post(self, request):
         username = request.data.get("username")
@@ -134,11 +133,17 @@ class UserLoginView(APIView):
 
 # 계정 로그아웃 API
 class UserLogoutView(APIView):
-    authentication_classes = [JWTAuthentication]
-
     def post(self, request):
-        user = request.user
-        user.update_refresh_token(None)
+        refresh = request.data.get('refresh')
+
+        if refresh is None:
+            return response.http_200('refresh is None')
+
+        try:
+            user = get_object_or_404(User, refresh_token=refresh)
+            user.update_refresh_token(None)
+        except:
+            return response.http_200('refresh is in valid')
 
         return response.HTTP_200
 
