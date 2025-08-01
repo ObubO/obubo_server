@@ -6,13 +6,13 @@ from django.shortcuts import get_object_or_404
 from django.contrib.auth import authenticate
 from django.conf import settings
 from rest_framework.views import APIView
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.serializers import TokenVerifySerializer, TokenRefreshSerializer
 from rest_framework_simplejwt.views import TokenRefreshView
 from .models import User, UserProfile, AuthTable
 from .serializers import SignUpSerializer, KakaoSignUpSerializer, UserProfileSerializer, UserSerializer, \
     UserIdSerializer, NicknameSerializer, PhoneNumberValidateSerializer, AuthTableSerializer,  \
     UserWritePostSerializer, UserWriteCommentSerializer, UserLikePostSerializer, UserLikeCommentSerializer, \
-    SecureTokenRefreshSerializer, CustomTokenObtainPairSerializer
+    CustomTokenObtainPairSerializer
 from sms import coolsms
 from common import response, functions
 from .oauth import kakao
@@ -24,6 +24,8 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes
 
 from django.contrib.auth.models import update_last_login
+
+from django.core.cache import cache
 
 SECRET_KEY = getattr(settings, 'SECRET_KEY', 'SECRET_KEY')
 SMS_API_KEY = getattr(settings, "SMS_API_KEY")
@@ -49,6 +51,10 @@ def generate_nickname():
             break
 
     return nickname
+
+
+def logout(refresh_token):
+    cache.delete(refresh_token)
 
 
 # -- 회원가입 -- #
@@ -126,7 +132,7 @@ class UserLoginView(APIView):
             token = serializer.validated_data
 
             update_last_login(None, user)
-            user.update_refresh_token(token['refresh'])
+            cache.set(token['refresh'], user.username)
 
             return response.http_200({"token": token})
 
@@ -135,17 +141,8 @@ class UserLoginView(APIView):
 class UserLogoutView(APIView):
     def post(self, request):
         refresh = request.data.get('refresh')
-
-        if refresh is None:
-            return response.http_200('refresh is None')
-
-        try:
-            user = get_object_or_404(User, refresh_token=refresh)
-            user.update_refresh_token(None)
-        except:
-            return response.http_200('refresh is in valid')
-
-        return response.HTTP_200
+        logout(refresh)
+        return response.http_200("로그아웃 되었습니다.")
 
 
 # 회원 탈퇴 API
@@ -162,15 +159,28 @@ class UserWithdrawalView(APIView):
 # AccessToken 재발급 API
 class UserTokenRefreshView(TokenRefreshView):
     def post(self, request, **kwargs):
-        refresh_token = request.data.get('refresh')
-        if not refresh_token:
-            return response.http_400('refresh token이 필요합니다.')
+        refresh = request.data.get('refresh')
+        token_info = {"token": refresh}
 
-        serializer = SecureTokenRefreshSerializer(data=request.data)
+        try:
+            TokenVerifySerializer(data=token_info).is_valid(raise_exception=True)
+        except Exception:
+            logout(refresh)
+            return response.http_401("유효하지 않은 토큰입니다.")
+
+        username = cache.get(refresh)
+        if username is None:
+            # logging & send message/mail
+            # redis reset
+            return response.http_403("탈취된 토큰일 가능성이 있습니다.")
+
+        serializer = TokenRefreshSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
             token = serializer.validated_data
-
             return response.http_200({"token": token})
+        else:
+            logout(refresh)
+            return response.http_503("토큰을 재발급 할 수 없습니다.")
 
 
 # -- 아이디 찾기 -- #
