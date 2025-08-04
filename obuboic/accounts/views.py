@@ -132,7 +132,7 @@ class UserLoginView(APIView):
             token = serializer.validated_data
 
             update_last_login(None, user)
-            cache.set(token['refresh'], user.username)
+            cache.set(token['refresh'], user.username, 60*60*24)        #
 
             return response.http_200({"token": token})
 
