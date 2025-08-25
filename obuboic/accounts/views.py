@@ -186,10 +186,9 @@ class UserTokenRefreshView(TokenRefreshView):
 # -- 아이디 찾기 -- #
 class UserFindIdView(APIView):
     def post(self, request):
-        name = request.data['name']
         phone = request.data['phone']
 
-        user_profile = get_object_or_404(UserProfile, name=name, phone=phone)
+        user_profile = get_object_or_404(UserProfile, phone=phone)
         user = user_profile.user
 
         result = {"id": user.username, "date": user.created_at}
@@ -211,47 +210,14 @@ class UserPasswordConfirmView(APIView):
             return response.HTTP_400
 
 
-# -- 비밀번호 재설정 요청-- #
-class UserPasswordResetRequestView(APIView):
+class UserPasswordResetView(APIView):
     def post(self, request):
-        phone = request.data['phone']
-        user_profile = get_object_or_404(UserProfile, phone=phone)
-        if not user_profile:
-            return response.http_400("해당 전화번호로 가입한 사용자가 없습니다.")
+        username, password = request.data['username'], request.data['password']
 
-        user = user_profile.user
-
-        token_generator = PasswordResetTokenGenerator()
-        token = token_generator.make_token(user)
-        uid = urlsafe_base64_encode(force_bytes(user.pk))
-
-        reset_link = f"https://nursinghome.ai/user/password-reset/{uid}/{token}"
-        coolsms.send_sms_link(SMS_API_KEY, SMS_API_SECRET, phone, reset_link)
-
-        return response.http_200(reset_link)
-
-
-# -- 비밀번호 재설정 -- #
-class UserPasswordResetConfirmView(APIView):
-    def post(self, request, uidb64, token):
-        password = request.data.get("password")
-        if not password:
-            return response.http_400("새 비밀번호를 입력해주세요.")
-
-        try:
-            uid = urlsafe_base64_decode(uidb64).decode()
-            user = User.objects.get(pk=uid)
-        except (ValueError, TypeError):
-            return response.http_400("잘못된 요청입니다.")
-
-        token_generator = PasswordResetTokenGenerator()
-        if not token_generator.check_token(user, token):
-            return response.http_400("유효하지 않은 토큰입니다.")
-
+        user = get_object_or_404(User, username=username)
         user.set_password(password)
-        user.save()
 
-        return response.http_200("비밀번호가 성공적으로 변경되었습니다.")
+        return response.HTTP_200
 
 
 # -- 전화번호 인증  -- #
@@ -276,7 +242,24 @@ class NamePhoneVerificationView(APIView):
 
         if UserProfile.objects.filter(name=name, phone=phone).exists():
             code = generate_code()
+            AuthTable.objects.create(phone=phone, code=code)
             coolsms.send_sms_code(SMS_API_KEY, SMS_API_SECRET, phone, code)  # 인증 코드 전송
+
+            return response.HTTP_200
+        else:
+            return response.http_400('회원이 존재하지 않습니다.')
+
+
+class IdPhoneVerificationView(APIView):
+    def post(self, request):
+        username, phone = request.data['username'], request.data['phone']
+
+        if UserProfile.objects.filter(user__username=username, phone=phone).exists():
+            code = generate_code()
+            AuthTable.objects.create(phone=phone, code=code)
+            coolsms.send_sms_code(SMS_API_KEY, SMS_API_SECRET, phone, code)  # 인증 코드 전송
+
+            return response.HTTP_200
         else:
             return response.http_400('회원이 존재하지 않습니다.')
 
