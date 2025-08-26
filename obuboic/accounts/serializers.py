@@ -1,9 +1,8 @@
 from datetime import datetime
 from django.shortcuts import get_object_or_404
 from .models import UserType, User, UserProfile, Terms, UserTerms, AuthTable
-from community.serializers import PostSerializer, CommentSerializer
-from rest_framework_simplejwt.serializers import TokenRefreshSerializer, TokenObtainPairSerializer
-from rest_framework_simplejwt.tokens import RefreshToken, TokenError
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import serializers
 
 
@@ -249,38 +248,6 @@ class KakaoSignUpSerializer(serializers.ModelSerializer):
                 is_consent=validated_terms,
                 consent_date=datetime.now(),
             )
-
-
-class UserWritePostSerializer(serializers.ModelSerializer):
-    posts = PostSerializer(many=True)
-
-    class Meta:
-        model = User
-        fields = ['posts']
-
-
-class UserWriteCommentSerializer(serializers.ModelSerializer):
-    comments = CommentSerializer(many=True)
-
-    class Meta:
-        model = User
-        fields = ['comments']
-
-
-class UserLikePostSerializer(serializers.ModelSerializer):
-    like_posts = PostSerializer(many=True)
-
-    class Meta:
-        model = User
-        fields = ['like_posts']
-
-
-class UserLikeCommentSerializer(serializers.ModelSerializer):
-    like_comments = CommentSerializer(many=True)
-
-    class Meta:
-        model = User
-        fields = ['like_comments']
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):

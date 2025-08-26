@@ -11,7 +11,6 @@ from rest_framework_simplejwt.views import TokenRefreshView
 from .models import User, UserProfile, AuthTable
 from .serializers import SignUpSerializer, KakaoSignUpSerializer, UserProfileSerializer, UserSerializer, \
     UserIdSerializer, NicknameSerializer, PhoneNumberValidateSerializer, AuthTableSerializer,  \
-    UserWritePostSerializer, UserWriteCommentSerializer, UserLikePostSerializer, UserLikeCommentSerializer, \
     CustomTokenObtainPairSerializer
 from sms import coolsms
 from common import response, functions
@@ -231,7 +230,7 @@ class PhoneVerificationView(APIView):
         if serializer.is_valid(raise_exception=True):
             AuthTable.objects.create(phone=phone, code=code)
 
-        # coolsms.send_sms_code(SMS_API_KEY, SMS_API_SECRET, phone, code)  # 인증 코드 전송
+        coolsms.send_sms_code(SMS_API_KEY, SMS_API_SECRET, phone, code)  # 인증 코드 전송
 
         return response.http_200('인증번호를 전송하였습니다.')
 
@@ -244,7 +243,7 @@ class NamePhoneVerificationView(APIView):
         if UserProfile.objects.filter(name=name, phone=phone).exists():
             code = generate_code()
             AuthTable.objects.create(phone=phone, code=code)
-            # coolsms.send_sms_code(SMS_API_KEY, SMS_API_SECRET, phone, code)  # 인증 코드 전송
+            coolsms.send_sms_code(SMS_API_KEY, SMS_API_SECRET, phone, code)  # 인증 코드 전송
 
             return response.HTTP_200
         else:
@@ -258,7 +257,7 @@ class IdPhoneVerificationView(APIView):
         if UserProfile.objects.filter(user__username=username, phone=phone).exists():
             code = generate_code()
             AuthTable.objects.create(phone=phone, code=code)
-            # coolsms.send_sms_code(SMS_API_KEY, SMS_API_SECRET, phone, code)  # 인증 코드 전송
+            coolsms.send_sms_code(SMS_API_KEY, SMS_API_SECRET, phone, code)  # 인증 코드 전송
 
             return response.HTTP_200
         else:

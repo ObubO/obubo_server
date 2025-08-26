@@ -18,12 +18,6 @@ urlpatterns = [
     path('users/password-reset', views.UserPasswordResetView.as_view()),                                  # POST: 비밀번호 확인
     path('users/password-confirm', views.UserPasswordConfirmView.as_view()),                              # POST: 비밀번호 확인
 
-    # 사용자 활동 조회
-    path('users/write/posts', views.UserWritePostView.as_view()),         # GET: 내가 쓴 게시글 조회
-    path('users/write/comments', views.UserWriteCommentView.as_view()),   # GET: 내가 쓴 댓글 조회
-    path('users/like/posts', views.UserLikePostView.as_view()),           # GET: 좋아요한 게시글
-    path('users/like/comments', views.UserLikeCommentView.as_view()),     # GET: 좋아요한 댓글
-
     # 인증
     path('verify/phone', views.PhoneVerificationView.as_view()),            # POST: 전화번호 인증
     path('verify/name-phone', views.NamePhoneVerificationView.as_view()),   # POST: 이름+전화번호 인증
