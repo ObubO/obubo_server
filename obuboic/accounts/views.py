@@ -6,13 +6,13 @@ from django.shortcuts import get_object_or_404
 from django.contrib.auth import authenticate
 from django.conf import settings
 from rest_framework.views import APIView
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.serializers import TokenVerifySerializer, TokenRefreshSerializer
 from rest_framework_simplejwt.views import TokenRefreshView
 from .models import User, UserProfile, AuthTable
 from .serializers import SignUpSerializer, KakaoSignUpSerializer, UserProfileSerializer, UserSerializer, \
     UserIdSerializer, NicknameSerializer, PhoneNumberValidateSerializer, AuthTableSerializer,  \
     UserWritePostSerializer, UserWriteCommentSerializer, UserLikePostSerializer, UserLikeCommentSerializer, \
-    SecureTokenRefreshSerializer, CustomTokenObtainPairSerializer
+    CustomTokenObtainPairSerializer
 from sms import coolsms
 from common import response, functions
 from .oauth import kakao
@@ -24,6 +24,8 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes
 
 from django.contrib.auth.models import update_last_login
+
+from django.core.cache import cache
 
 SECRET_KEY = getattr(settings, 'SECRET_KEY', 'SECRET_KEY')
 SMS_API_KEY = getattr(settings, "SMS_API_KEY")
@@ -49,6 +51,10 @@ def generate_nickname():
             break
 
     return nickname
+
+
+def logout(refresh_token):
+    cache.delete(refresh_token)
 
 
 # -- 회원가입 -- #
@@ -110,7 +116,6 @@ class UserProfileView(APIView):
 
 # 계정 로그인 API
 class UserLoginView(APIView):
-    authentication_classes = [JWTAuthentication]
 
     def post(self, request):
         username = request.data.get("username")
@@ -127,20 +132,17 @@ class UserLoginView(APIView):
             token = serializer.validated_data
 
             update_last_login(None, user)
-            user.update_refresh_token(token['refresh'])
+            cache.set(token['refresh'], user.username, 60*60*24)        #
 
             return response.http_200({"token": token})
 
 
 # 계정 로그아웃 API
 class UserLogoutView(APIView):
-    authentication_classes = [JWTAuthentication]
-
     def post(self, request):
-        user = request.user
-        user.update_refresh_token(None)
-
-        return response.HTTP_200
+        refresh = request.data.get('refresh')
+        logout(refresh)
+        return response.http_200("로그아웃 되었습니다.")
 
 
 # 회원 탈퇴 API
@@ -157,24 +159,36 @@ class UserWithdrawalView(APIView):
 # AccessToken 재발급 API
 class UserTokenRefreshView(TokenRefreshView):
     def post(self, request, **kwargs):
-        refresh_token = request.data.get('refresh')
-        if not refresh_token:
-            return response.http_400('refresh token이 필요합니다.')
+        refresh = request.data.get('refresh')
+        token_info = {"token": refresh}
 
-        serializer = SecureTokenRefreshSerializer(data=request.data)
+        try:
+            TokenVerifySerializer(data=token_info).is_valid(raise_exception=True)
+        except Exception:
+            logout(refresh)
+            return response.http_401("유효하지 않은 토큰입니다.")
+
+        username = cache.get(refresh)
+        if username is None:
+            # logging & send message/mail
+            # redis reset
+            return response.http_403("탈취된 토큰일 가능성이 있습니다.")
+
+        serializer = TokenRefreshSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
             token = serializer.validated_data
-
             return response.http_200({"token": token})
+        else:
+            logout(refresh)
+            return response.http_503("토큰을 재발급 할 수 없습니다.")
 
 
 # -- 아이디 찾기 -- #
 class UserFindIdView(APIView):
     def post(self, request):
-        name = request.data['name']
         phone = request.data['phone']
 
-        user_profile = get_object_or_404(UserProfile, name=name, phone=phone)
+        user_profile = get_object_or_404(UserProfile, phone=phone)
         user = user_profile.user
 
         result = {"id": user.username, "date": user.created_at}
@@ -196,47 +210,15 @@ class UserPasswordConfirmView(APIView):
             return response.HTTP_400
 
 
-# -- 비밀번호 재설정 요청-- #
-class UserPasswordResetRequestView(APIView):
+class UserPasswordResetView(APIView):
     def post(self, request):
-        phone = request.data['phone']
-        user_profile = get_object_or_404(UserProfile, phone=phone)
-        if not user_profile:
-            return response.http_400("해당 전화번호로 가입한 사용자가 없습니다.")
+        username, password = request.data['username'], request.data['password']
 
-        user = user_profile.user
-
-        token_generator = PasswordResetTokenGenerator()
-        token = token_generator.make_token(user)
-        uid = urlsafe_base64_encode(force_bytes(user.pk))
-
-        reset_link = f"https://nursinghome.ai/user/password-reset/{uid}/{token}"
-        coolsms.send_sms_link(SMS_API_KEY, SMS_API_SECRET, phone, reset_link)
-
-        return response.http_200(reset_link)
-
-
-# -- 비밀번호 재설정 -- #
-class UserPasswordResetConfirmView(APIView):
-    def post(self, request, uidb64, token):
-        password = request.data.get("password")
-        if not password:
-            return response.http_400("새 비밀번호를 입력해주세요.")
-
-        try:
-            uid = urlsafe_base64_decode(uidb64).decode()
-            user = User.objects.get(pk=uid)
-        except (ValueError, TypeError):
-            return response.http_400("잘못된 요청입니다.")
-
-        token_generator = PasswordResetTokenGenerator()
-        if not token_generator.check_token(user, token):
-            return response.http_400("유효하지 않은 토큰입니다.")
-
+        user = get_object_or_404(User, username=username)
         user.set_password(password)
         user.save()
 
-        return response.http_200("비밀번호가 성공적으로 변경되었습니다.")
+        return response.HTTP_200
 
 
 # -- 전화번호 인증  -- #
@@ -249,7 +231,7 @@ class PhoneVerificationView(APIView):
         if serializer.is_valid(raise_exception=True):
             AuthTable.objects.create(phone=phone, code=code)
 
-        coolsms.send_sms_code(SMS_API_KEY, SMS_API_SECRET, phone, code)  # 인증 코드 전송
+        # coolsms.send_sms_code(SMS_API_KEY, SMS_API_SECRET, phone, code)  # 인증 코드 전송
 
         return response.http_200('인증번호를 전송하였습니다.')
 
@@ -261,7 +243,24 @@ class NamePhoneVerificationView(APIView):
 
         if UserProfile.objects.filter(name=name, phone=phone).exists():
             code = generate_code()
-            coolsms.send_sms_code(SMS_API_KEY, SMS_API_SECRET, phone, code)  # 인증 코드 전송
+            AuthTable.objects.create(phone=phone, code=code)
+            # coolsms.send_sms_code(SMS_API_KEY, SMS_API_SECRET, phone, code)  # 인증 코드 전송
+
+            return response.HTTP_200
+        else:
+            return response.http_400('회원이 존재하지 않습니다.')
+
+
+class IdPhoneVerificationView(APIView):
+    def post(self, request):
+        username, phone = request.data['username'], request.data['phone']
+
+        if UserProfile.objects.filter(user__username=username, phone=phone).exists():
+            code = generate_code()
+            AuthTable.objects.create(phone=phone, code=code)
+            # coolsms.send_sms_code(SMS_API_KEY, SMS_API_SECRET, phone, code)  # 인증 코드 전송
+
+            return response.HTTP_200
         else:
             return response.http_400('회원이 존재하지 않습니다.')
 

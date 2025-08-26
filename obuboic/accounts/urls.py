@@ -15,9 +15,8 @@ urlpatterns = [
     # 사용자 프로필
     path('users/profile', views.UserProfileView.as_view()),                                               # GET: 회원정보 조회 / PATCH: 회원정보 수정
     path('users/find-id', views.UserFindIdView.as_view()),                                                # POST: 아이디 찾기
+    path('users/password-reset', views.UserPasswordResetView.as_view()),                                  # POST: 비밀번호 확인
     path('users/password-confirm', views.UserPasswordConfirmView.as_view()),                              # POST: 비밀번호 확인
-    path('users/password-reset', views.UserPasswordResetRequestView.as_view()),                           # POST: 비밀번호 재설정 요청
-    path('users/password-reset/<str:uidb64>/<str:token>', views.UserPasswordResetConfirmView.as_view()),  # POST: 비밀번호 재설정 처리
 
     # 사용자 활동 조회
     path('users/write/posts', views.UserWritePostView.as_view()),         # GET: 내가 쓴 게시글 조회
@@ -28,7 +27,8 @@ urlpatterns = [
     # 인증
     path('verify/phone', views.PhoneVerificationView.as_view()),            # POST: 전화번호 인증
     path('verify/name-phone', views.NamePhoneVerificationView.as_view()),   # POST: 이름+전화번호 인증
-    path('validate/code', views.VerificationCodeConfirmView.as_view()),       # POST: 인증번호 확인
+    path('verify/id-phone', views.IdPhoneVerificationView.as_view()),       # POST: 이름+전화번호 인증
+    path('validate/code', views.VerificationCodeConfirmView.as_view()),     # POST: 인증번호 확인
 
     # 토큰
     path('users/token/refresh', views.UserTokenRefreshView.as_view()),        # POST: access_token 재발급
