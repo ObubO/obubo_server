@@ -216,6 +216,7 @@ class UserPasswordResetView(APIView):
 
         user = get_object_or_404(User, username=username)
         user.set_password(password)
+        user.save()
 
         return response.HTTP_200
 
@@ -230,7 +231,7 @@ class PhoneVerificationView(APIView):
         if serializer.is_valid(raise_exception=True):
             AuthTable.objects.create(phone=phone, code=code)
 
-        coolsms.send_sms_code(SMS_API_KEY, SMS_API_SECRET, phone, code)  # 인증 코드 전송
+        # coolsms.send_sms_code(SMS_API_KEY, SMS_API_SECRET, phone, code)  # 인증 코드 전송
 
         return response.http_200('인증번호를 전송하였습니다.')
 
@@ -243,7 +244,7 @@ class NamePhoneVerificationView(APIView):
         if UserProfile.objects.filter(name=name, phone=phone).exists():
             code = generate_code()
             AuthTable.objects.create(phone=phone, code=code)
-            coolsms.send_sms_code(SMS_API_KEY, SMS_API_SECRET, phone, code)  # 인증 코드 전송
+            # coolsms.send_sms_code(SMS_API_KEY, SMS_API_SECRET, phone, code)  # 인증 코드 전송
 
             return response.HTTP_200
         else:
@@ -257,7 +258,7 @@ class IdPhoneVerificationView(APIView):
         if UserProfile.objects.filter(user__username=username, phone=phone).exists():
             code = generate_code()
             AuthTable.objects.create(phone=phone, code=code)
-            coolsms.send_sms_code(SMS_API_KEY, SMS_API_SECRET, phone, code)  # 인증 코드 전송
+            # coolsms.send_sms_code(SMS_API_KEY, SMS_API_SECRET, phone, code)  # 인증 코드 전송
 
             return response.HTTP_200
         else:
