@@ -32,7 +32,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserProfile
-        fields = ['user_id', 'username', 'name', 'nickname', 'gender', 'birth', 'phone', 'email']
+        fields = ['user_id', 'username', 'user_type', 'name', 'nickname', 'gender', 'birth', 'phone', 'email']
 
     def create(self, validated_data, user=None, user_type=None):
         if user is None:
