@@ -8,13 +8,13 @@ class AuthorSafeMixin(serializers.Serializer):
 
     def get_author(self, obj):
         if obj.user:
-            return obj.user.user_profile.nickname
+            return obj.user.user_profiles.nickname
         else:
             return None
 
     def get_user_type(self, obj):
         if obj.user:
-            return obj.user.user_profile.user_type
+            return obj.user.user_profiles.user_type
         else:
             return None
 
@@ -46,7 +46,7 @@ class PostCommentSerializer(AuthorSafeMixin, serializers.ModelSerializer):
     class Meta:
         model = Comment
         fields = [
-            'id', 'author', 'user_type',
+            'id', 'author', 'user',
             'content', 'like_count', 'replies',
             'created_at'
         ]
@@ -69,6 +69,7 @@ class PostSerializer(AuthorSafeMixin, serializers.ModelSerializer):
 class PostDetailSerializer(AuthorSafeMixin, serializers.ModelSerializer):
     comment_count = serializers.IntegerField(source='comments.count', read_only=True)
     like_count = serializers.IntegerField(source='like.count', read_only=True)
+    user_type = serializers.CharField(source='user.user_profiles.user_type')
 
     class Meta:
         model = Post

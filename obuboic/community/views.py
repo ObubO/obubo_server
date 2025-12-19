@@ -14,9 +14,15 @@ class PostView(APIView):
     def get(self, request):
         posts_instance = Post.objects.filter().order_by('-created_at')   # 게시글 인스턴스 리스트 조회
 
-        size = request.query_params.get('size', 10)                     # Paginator 설정
-        page_num = request.query_params.get('page', 1)
+        try:
+            size = int(request.query_params.get('size', 10))                     # Paginator 설정
+            page_num = int(request.query_params.get('page', 1))
+
+        except ValueError:
+            return response.http_400("invalid page or size parameter")
+
         paginator = Paginator(posts_instance, size)
+
         post_list = paginator.get_page(page_num)
 
         post_serializer = PostListSerializer(post_list, many=True)      # 데이터 직렬화
@@ -49,7 +55,7 @@ class PostDetailView(APIView):
 
         return response.http_200(result)
 
-    def put(self, request, post_id):
+    def patch(self, request, post_id):
         post_serializer = PostSerializer(data=request.data)                        # 데이터 유효성 검사
 
         if post_serializer.is_valid(raise_exception=True):
@@ -93,7 +99,7 @@ class CommentDetailView(APIView):
 
         return response.http_200(comment_serializer.data)
 
-    def put(self, request, comment_id):
+    def patch(self, request, comment_id):
         comment_serializer = CommentSerializer(data=request.data)           # 데이터 유효성 검사
 
         if comment_serializer.is_valid(raise_exception=True):
